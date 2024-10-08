@@ -5,6 +5,7 @@ import com.example.demo.common.enums.LoginType;
 import com.example.demo.entity.User;
 import com.example.demo.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -17,10 +18,14 @@ import org.springframework.util.Assert;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class OAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    public OAuth2UserService(UserRepository userRepository,@Lazy PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Transactional
     @Override

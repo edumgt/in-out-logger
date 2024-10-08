@@ -2,6 +2,7 @@ package com.example.demo.service.auth;
 
 import com.example.demo.dto.token.TokenDto;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.servlet.http.HttpServletRequest;
@@ -57,11 +58,19 @@ public class JwtService {
                 .tokenExpiresIn(tokenExpiresIn.getTime())
                 .build();
     }
-    private Claims parseClaims(String accessToken) {
+    private boolean validateToken(String token) {
+        try {
+            Claims body = parseClaims(token).getBody();
+            return body.getExpiration().after(new Date());
+        } catch (Exception e){
+            return false;
+        }
+    }
+    private Jws<Claims> parseClaims(String token){
         return Jwts
                 .parserBuilder()
                 .setSigningKey(key)
                 .build()
-                .parseClaimsJws(accessToken).getBody();
+                .parseClaimsJws(token);
     }
 }
