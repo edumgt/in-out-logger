@@ -1,0 +1,21 @@
+server:
+  port: 80
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update # hibernate?? ??
+    #      naming:
+    #        physical-strategy: com.spm.common.strategy.CamelToSnakeUpperStrategy
+    show-sql: true  # SQL ?? ?? ??
+    generate-ddl: false # ? ??? ??? ???? ??
+    open-in-view: false # HTTP ??? ??? ??? ??? ?????? ??? ????
+    properties:
+      hibernate:
+        format_sql: true
+  application:
+    name: demo
+
+jwt:
+  secret: 216bf8c7d6979b78b6319a796fde01e248daf1977a592440f4d2bd2d9638fee9
+
