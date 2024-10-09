@@ -7,21 +7,19 @@
         </encoder>
     </appender>
 
-    <springProfile name="prod">
-        <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-            <file>${LOG_PATH:-logs}/log.log</file>
-            <encoder>
-                <pattern>[%d{yyyy-MM-dd HH:mm:ss}:%-3relative][%thread] %-5level %logger{35} - %msg%n</pattern>
-            </encoder>
-            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-                <fileNamePattern>${LOG_PATH:-logs}/log.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-                <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                    <maxFileSize>1000MB</maxFileSize>
-                </timeBasedFileNamingAndTriggeringPolicy>
-                <maxHistory>200</maxHistory>
-            </rollingPolicy>
-        </appender>
-    </springProfile>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH:-logs}/log.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss}:%-3relative][%thread] %-5level %logger{35} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH:-logs}/log.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>1000MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>200</maxHistory>
+        </rollingPolicy>
+    </appender>
 
     <logger name="_org" level="INFO" />
     <logger name="org.thymeleaf" level="INFO" />
@@ -30,9 +28,6 @@
     <!-- Only log SQL queries -->
     <logger name="jdbc.sqlonly" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT"/>
-        <springProfile name="prod">
-            <appender-ref ref="FILE"/>
-        </springProfile>
     </logger>
 
     <!-- JPA/Hibernate 쿼리 로깅 -->
@@ -48,7 +43,6 @@
     <logger name="jdbc.resultset" level="OFF"/>
     <logger name="jdbc.resultsettable" level="OFF"/>
     <logger name="jdbc.connection" level="OFF"/>
-
 
     <springProfile name="dev">
         <logger name="jdbc.sqlonly" level="DEBUG" />
