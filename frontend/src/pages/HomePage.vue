@@ -10,7 +10,8 @@ console.log('query', query)
 
 <template>
     <router-link to="/">메인</router-link>
-    <router-link to="/user">회원가입/로그인</router-link>
+    <router-link to="/sign-up">회원가입</router-link>
+    <router-link to="/sign-in">로그인</router-link>
 </template>
 
 <style scoped>

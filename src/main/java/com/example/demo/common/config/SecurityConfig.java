@@ -30,7 +30,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import java.security.Key;
 
 @Configuration
-@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {

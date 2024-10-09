@@ -1,5 +1,7 @@
 package com.example.demo.common.config;
 
+import com.example.demo.common.auth.PrincipalDetails;
+import com.example.demo.entity.User;
 import com.example.demo.model.SecretConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -17,8 +19,8 @@ import javax.sql.DataSource;
 import java.util.Optional;
 
 @Configuration
-//@EnableJpaRepositories(basePackages = "com.api.sample.repository")
-//@EnableJpaAuditing
+@EnableJpaRepositories(basePackages = "com.example.demo.repository")
+@EnableJpaAuditing
 @RequiredArgsConstructor
 public class DatabaseConfig {
     @Bean
@@ -34,18 +36,18 @@ public class DatabaseConfig {
     }
 
 
-//    @Bean
-//    public AuditorAware<User> auditorProvider() {
-//        return () -> {
-//            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//            if(authentication == null){
-//                return Optional.empty();
-//            }
-//            Object principal = authentication.getPrincipal();
-//            if(principal instanceof PrincipalDetails principalDetails) {
-//                return Optional.of(principalDetails.user());
-//            }
-//            return Optional.empty();
-//        };
-//    }
+    @Bean
+    public AuditorAware<User> auditorProvider() {
+        return () -> {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if(authentication == null){
+                return Optional.empty();
+            }
+            Object principal = authentication.getPrincipal();
+            if(principal instanceof PrincipalDetails principalDetails) {
+                return Optional.of(principalDetails.user());
+            }
+            return Optional.empty();
+        };
+    }
 }
