@@ -1,6 +1,7 @@
 package com.example.demo.common.auth;
 
 import com.example.demo.entity.User;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,6 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+@Slf4j
 public record PrincipalDetails(User user) implements OAuth2User, UserDetails, Serializable {
     @Serial
     private static final long serialVersionUID = 6036051638701599658L;
@@ -33,13 +35,13 @@ public record PrincipalDetails(User user) implements OAuth2User, UserDetails, Se
 
     @Override
     public String getUsername() {
-        return user.getUsername();
+        return user.getEmail();
     }
 
 
     @Override
     public String getName() {
-        return user.getUsername();
+        return user.getEmail();
     }
 }
 

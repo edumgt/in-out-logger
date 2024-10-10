@@ -14,7 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class CustomAuthenticationProvider implements AuthenticationProvider {
     private final CustomUserDetailsService customUserDetailsService;
     private final PasswordEncoder passwordEncoder;
-
+    // jwt 인증에 사용
+    // loadUserByUsername 인터페이스 호출은 login에 사용
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String username = authentication.getName();

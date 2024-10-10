@@ -56,8 +56,8 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
 import { useUserStore } from '@/stores/userStore.ts'
+import axios from '@/utils/axios.ts'
 
 
 const route = useRoute()
