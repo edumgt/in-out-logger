@@ -1,17 +1,23 @@
 <script setup lang="ts">
-import {useRoute} from "vue-router";
+  import { useUserStore } from '@/stores/userStore.ts'
+  import axios from 'axios'
 
-const route = useRoute()
-const {name, params, query} = route
-console.log('name', name)
-console.log('params', params)
-console.log('query', query)
+  const { getUsername } = useUserStore()
+  const checkAuth = async () => {
+    const response = await axios.get('/api/auth/test')
+    console.log(response)
+  }
+
 </script>
 
 <template>
-    <router-link to="/">메인</router-link>
-    <router-link to="/sign-up">회원가입</router-link>
-    <router-link to="/sign-in">로그인</router-link>
+    <div class="flex flex-col">
+      <router-link to="/">메인</router-link>
+      <router-link to="/sign-up">회원가입</router-link>
+      <router-link to="/sign-in">로그인</router-link>
+      <span @click="checkAuth" class="cursor-pointer">로그인 체크</span>
+      <div>{{ getUsername }}님 하이</div>
+    </div>
 </template>
 
 <style scoped>

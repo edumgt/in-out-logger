@@ -1,5 +1,4 @@
 <template>
-  {{errors}}
   <div class="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -57,9 +56,9 @@
           </div>
 
           <div class="mt-6">
-            <button @click="test" type="button" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+            <router-link to="/sign-in" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
               로그인
-            </button>
+            </router-link>
           </div>
         </div>
       </div>
@@ -70,9 +69,10 @@
 import * as yup from 'yup'
 import { useForm } from 'vee-validate'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
 
 const signUpSchema = yup.object({
-  username: yup.string().required('닉네임은 필수입니다.').min(4, '최소 4자 이상 입력하세요.').max(12, '최대 12자까지 입력 가능합니다.'),
+  username: yup.string().required('닉네임은 필수입니다.').min(4, '닉네임을 최소 4자 이상 입력하세요.').max(12, '닉네임은 최대 12자까지 입력 가능합니다.'),
   email: yup.string().email('유효한 이메일을 입력하세요.').required('이메일은 필수입니다.'),
   password: yup.string().required('비밀번호는 필수입니다.'),
   confirmPassword: yup.string().oneOf([yup.ref('password')], '비밀번호가 일치하지 않습니다.').required('비밀번호 확인은 필수입니다.')
@@ -83,26 +83,28 @@ const signUpSchema = yup.object({
 type TSignUpFormData = yup.InferType<typeof signUpSchema>
 
 
-const { handleSubmit,errors , defineField} = useForm<TSignUpFormData>({
-  validationSchema: signUpSchema,
+const { handleSubmit, defineField } = useForm<TSignUpFormData>({
+  validationSchema: signUpSchema
 })
 const [username, usernameProps] = defineField('username')
 const [email, emailProps] = defineField('email')
 const [password, passwordProps] = defineField('password')
 const [confirmPassword, confirmPasswordProps] = defineField('confirmPassword')
 
+const router = useRouter()
+
 const onSubmit = handleSubmit(async (values) => {
-  const response = await axios.post('/api/auth/sign-up' , values)
-  console.log(response)
-});
-const test = async () => {
-  const response = await axios.post('/api/auth/sign-up' , {
-    username: 'jhjh',
-    email: 'd@d.com',
-    password: 'gkgk',
-    confirmPassword: 'gkgk'
-  })
-  console.log(response)
-}
+    try {
+      await axios.post('/api/auth/sign-up', values)
+      await router.push(`/sign-in?id=${values.email}`)
+    } catch (e: any) {
+      alert(e.response.data)
+    }
+  },
+  ({ errors }) => { // validation 실패 콜백함수
+    const message = Object.values(errors)[0]
+    alert(message)
+  }
+)
 
 </script>
