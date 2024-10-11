@@ -19,3 +19,8 @@ spring:
 jwt:
   secret: 216bf8c7d6979b78b6319a796fde01e248daf1977a592440f4d2bd2d9638fee9
 
+frontend:
+  uri: http://localhost:5173
+
+oauth2:
+  redirect-uri: http://localhost/login/oauth2/code/kakao

@@ -1,6 +1,7 @@
 package com.example.demo.common.config;
 
 import com.example.demo.common.filter.JwtFilter;
+import com.example.demo.common.handler.OAuth2SuccessHandler;
 import com.example.demo.model.SecretConfig;
 import com.example.demo.service.auth.OAuth2UserService;
 import io.jsonwebtoken.security.Keys;
@@ -32,12 +33,15 @@ import java.security.Key;
 
 @Slf4j
 @Configuration
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 @RequiredArgsConstructor
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfig {
     private final OAuth2UserService oAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
+    @Value("${oauth2.redirect-uri}")
+    private String oauth2RedirectUri;
 
     @Bean
     public PasswordEncoder bCryptPasswordEncoder() {
@@ -49,11 +53,6 @@ public class SecurityConfig {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
     @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() { // security를 적용하지 않을 리소스
-        return web -> web.ignoring()
-                .requestMatchers("/error", "/favicon.ico");
-    }
-    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
         http.cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
@@ -63,11 +62,14 @@ public class SecurityConfig {
                     httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
                 })
                 .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry -> {
-                    authorizationManagerRequestMatcherRegistry.anyRequest().permitAll();
+                    authorizationManagerRequestMatcherRegistry
+                            .requestMatchers("/error", "/favicon.ico").permitAll()
+                            .anyRequest().permitAll(); // 추후 변경, 또는 모든 권한 허가 후 메소드별 권한 제어
                 })
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(httpSecurityOAuth2LoginConfigurer -> {
                     httpSecurityOAuth2LoginConfigurer
+                            .successHandler(oAuth2SuccessHandler)
                             .userInfoEndpoint(userInfoEndpointConfig -> {
                                 userInfoEndpointConfig.userService(oAuth2UserService);
                             }); // loginPage -> /oauth2/authorization/{withRegistrationId}
@@ -105,7 +107,7 @@ public class SecurityConfig {
                 .userInfoUri("https://kapi.kakao.com/v2/user/me")
                 .userNameAttributeName("id")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-                .redirectUri("http://localhost/login/oauth2/code/kakao")
+                .redirectUri(oauth2RedirectUri)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .scope("profile_nickname")
                 .build();

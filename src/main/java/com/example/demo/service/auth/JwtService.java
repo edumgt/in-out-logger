@@ -32,10 +32,16 @@ public class JwtService {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
         long now = new Date().getTime();
+        Object principal = authentication.getPrincipal();
+        if(!(principal instanceof PrincipalDetails principalDetails)) { // jwt 필터를 거쳤을 때에만 UserDetails class
+            throw new RuntimeException();
+        }
+        Long id = principalDetails.user().getId(); // stateless 해야하기 때문에 DB 조회하지 않음 -> AuditorAware에서 조회할 수 있게끔 id값 넣어줌
         Date tokenExpiresIn = new Date(now + Token.ACCESS_TOKEN_EXPIRE_TIME);
         String accessToken = Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim(Token.AUTHORITIES_KEY, authorities)
+                .claim("id", id)
                 .setExpiration(tokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();

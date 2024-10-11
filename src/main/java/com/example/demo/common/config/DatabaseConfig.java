@@ -39,6 +39,11 @@ public class DatabaseConfig {
     @Bean
     public AuditorAware<User> auditorProvider() {
         return () -> {
+//            if(true){
+//                return Optional.of(User.builder()
+//                        .id(15L)
+//                        .build());
+//            } 이렇게 넣어도 id 15로 들어감. 영속성이 없어도 됨
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if(authentication == null){
                 return Optional.empty();
