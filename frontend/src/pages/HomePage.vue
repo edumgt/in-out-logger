@@ -1,25 +1,27 @@
 <script setup lang="ts">
-import { useUserStore } from '@/stores/userStore.ts'
+import useUserStore from '@/stores/userStore.ts'
 import axios from '@/utils/axios.ts'
 import { useRoute, useRouter } from 'vue-router'
+import useTokenStore from '@/stores/tokenStore.ts'
 
 const route = useRoute()
 const { setUsername } = useUserStore()
-
+const { setToken } = useTokenStore()
 const { token, username } = route.query
 if (token && username) {
-  localStorage.setItem('token', token as string)
+  setToken(token)
   setUsername(username)
 }
 const { getUsername } = useUserStore()
 
 const checkAuth = async () => {
-  await axios.get('/api/auth/test')
+  const response = await axios.get('/api/auth/test')
+  console.log('checkAuth', response.status)
 }
 const router = useRouter()
 const logout = () => {
   setUsername('')
-  localStorage.removeItem('token')
+  setToken('')
   router.push('/sign-in')
 }
 

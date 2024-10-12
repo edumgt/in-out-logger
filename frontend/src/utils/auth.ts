@@ -1,4 +1,7 @@
+import useTokenStore from '../stores/tokenStore.ts'
+
 export const isTokenValid = () => {
-  const token = localStorage.getItem('token')
-  return !!token
+  const { getToken } = useTokenStore()
+  // const token = localStorage.getItem('token')
+  return !!getToken
 }

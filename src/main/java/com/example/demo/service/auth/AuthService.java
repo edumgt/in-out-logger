@@ -39,7 +39,7 @@ public class AuthService {
                 .username(username)
                 .role(Role.from(role))
                 .build();
-        UserDetails principal = new PrincipalDetails(user);
+        UserDetails principal = new PrincipalDetails(user); // PrincipalDetails(UserDetails)에 User
         return new UsernamePasswordAuthenticationToken(principal, accessToken, authorities);
     }
 

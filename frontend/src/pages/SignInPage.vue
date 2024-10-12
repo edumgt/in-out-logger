@@ -56,8 +56,9 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/userStore.ts'
+import useUserStore from '@/stores/userStore.ts'
 import axios from '@/utils/axios.ts'
+import useTokenStore from '@/stores/tokenStore.ts'
 
 
 const route = useRoute()
@@ -70,13 +71,19 @@ if (id) {
   form.email = id as string
 }
 const { setUsername } = useUserStore()
+const { setToken } = useTokenStore()
 const router = useRouter()
 
 const handleSubmit = async () => {
   try {
     const response = await axios.post<Token>('/api/auth/sign-in', form)
     const { data } = response
-    localStorage.setItem('token', response.headers['Authentication'])
+    let token = response.headers.authorization
+    if(!token.startsWith('Bearer')){
+      throw new Error()
+    }
+    token = token.slice(7)
+    setToken(token)
     setUsername(data.username)
     await router.push('/')
   } catch (e: any) {

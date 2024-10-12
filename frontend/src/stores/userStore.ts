@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-export const useUserStore = defineStore('user', {
+const useUserStore = defineStore('user', {
   state: () => ({
     username: ''
   }),
@@ -10,9 +10,11 @@ export const useUserStore = defineStore('user', {
     }
   },
   getters: {
-    getUsername(state){
+    getUsername(state) {
       return state.username
     }
   },
   persist: true
 })
+
+export default useUserStore
