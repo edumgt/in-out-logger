@@ -6,10 +6,9 @@ import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const { setUsername } = useUserStore()
 
-const { token, exp, username } = route.query
-if (token && exp && username) {
-  localStorage.setItem('$at', token as string)
-  localStorage.setItem('$exp', exp as string)
+const { token, username } = route.query
+if (token && username) {
+  localStorage.setItem('token', token as string)
   setUsername(username)
 }
 const { getUsername } = useUserStore()
@@ -20,8 +19,7 @@ const checkAuth = async () => {
 const router = useRouter()
 const logout = () => {
   setUsername('')
-  localStorage.removeItem('$at')
-  localStorage.removeItem('$exp')
+  localStorage.removeItem('token')
   router.push('/sign-in')
 }
 

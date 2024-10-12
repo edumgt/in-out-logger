@@ -1,12 +1,16 @@
 package com.example.demo.service.auth;
 
+import com.example.demo.common.constants.Redis;
+import com.example.demo.common.constants.Token;
 import com.example.demo.common.enums.Role;
 import com.example.demo.common.exception.HttpException;
+import com.example.demo.common.utils.HttpUtils;
 import com.example.demo.dto.request.JoinRequestDto;
 import com.example.demo.dto.request.LoginRequestDto;
 import com.example.demo.dto.token.TokenDto;
 import com.example.demo.entity.User;
 import com.example.demo.repository.user.UserRepository;
+import com.example.demo.service.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -21,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +37,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final RedisService redisService;
     // 일반 로그인
     public TokenDto signIn(LoginRequestDto loginRequestDto) {
         User user = userRepository.findByEmail(loginRequestDto.getEmail())
@@ -43,7 +49,10 @@ public class UserService {
         );
         try {
             Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
-            return jwtService.generateToken(authentication);
+            String clientIp = HttpUtils.getClientIp();
+            TokenDto tokenDto =  jwtService.generateToken(authentication);
+            redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
+            return tokenDto;
         } catch (BadCredentialsException e){
             throw new HttpException(HttpStatus.BAD_REQUEST, "유효하지 않은 비밀번호입니다.");
         } catch (Exception e){

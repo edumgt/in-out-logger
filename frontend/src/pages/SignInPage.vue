@@ -76,8 +76,7 @@ const handleSubmit = async () => {
   try {
     const response = await axios.post<Token>('/api/auth/sign-in', form)
     const { data } = response
-    localStorage.setItem('$at', data.accessToken)
-    localStorage.setItem('$exp', data.tokenExpiresIn.toString())
+    localStorage.setItem('token', response.headers['Authentication'])
     setUsername(data.username)
     await router.push('/')
   } catch (e: any) {

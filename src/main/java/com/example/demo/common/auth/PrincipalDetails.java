@@ -37,7 +37,7 @@ public record PrincipalDetails(User user) implements OAuth2User, UserDetails, Se
 
     @Override
     public String getUsername() {
-        return user.getEmail();
+        return user.getUsername();
     }
 
 

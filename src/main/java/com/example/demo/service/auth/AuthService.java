@@ -24,25 +24,27 @@ public class AuthService {
 
     private final JwtService jwtService;
 
-    public Authentication createAuthentication(String token) {
-        Claims claims = jwtService.parseClaims(token);
+    private Authentication createAuthentication(String accessToken) {
+        Claims claims = jwtService.parseClaims(accessToken);
         String id = claims.get("id").toString(); // jwt에 넣어준 id값 가져와서 영속성이 없는 User로 생성한 UserDetails을 인자로 넣어줌
-        String role = (String) claims.get(Token.AUTHORITIES_KEY);
-        String email = (String) claims.get("email");
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(role.split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+        String role = claims.get(Token.AUTHORITIES_KEY, String.class);
+        String subject = claims.get("sub", String.class);
+        String username = claims.get("username", String.class);
+        Collection<? extends GrantedAuthority> authorities = Arrays.stream(role.split(","))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
         User user = User.builder()
                 .id(Long.parseLong(id))
-                .email(email)
+                .email(subject)
+                .username(username)
                 .role(Role.from(role))
                 .build();
         UserDetails principal = new PrincipalDetails(user);
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        return new UsernamePasswordAuthenticationToken(principal, accessToken, authorities);
     }
 
-    public void setAuthentication(Authentication authentication) {
+    public void setAuthentication(String accessToken) {
+        Authentication authentication = createAuthentication(accessToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 

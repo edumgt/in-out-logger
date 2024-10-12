@@ -8,7 +8,7 @@ const axios = _axios.create({
 })
 // 요청 인터셉터
 axios.interceptors.request.use(config => {
-  const token = localStorage.getItem('$at') || ''
+  const token = localStorage.getItem('token') || ''
   config.headers.Authorization = `Bearer ${token}`
   return config
 }, error => {

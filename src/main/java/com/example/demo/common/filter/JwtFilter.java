@@ -1,35 +1,55 @@
 package com.example.demo.common.filter;
 
+import com.example.demo.common.constants.Redis;
 import com.example.demo.common.constants.Token;
+import com.example.demo.common.utils.HttpUtils;
+import com.example.demo.common.utils.Pair;
+import com.example.demo.dto.token.TokenDto;
 import com.example.demo.service.auth.AuthService;
 import com.example.demo.service.auth.JwtService;
+import com.example.demo.service.redis.RedisService;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Duration;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
-
     private final JwtService jwtService;
     private final AuthService authService;
+    private final RedisService redisService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String accessToken = resolveToken(request);
-        if(jwtService.validateToken(accessToken)){
-            Authentication authentication = authService.createAuthentication(accessToken);
-            authService.setAuthentication(authentication);
-        } else {
-            // refreshToken으로 재발급
+        if (StringUtils.hasText(accessToken)) {
+            Pair<Boolean, Claims> accessTokenPair = jwtService.validateToken(accessToken);
+            if (accessTokenPair.getFirst()) {  // 액세스토큰 검사
+                authService.setAuthentication(accessToken);
+            } else {
+                String clientIp = HttpUtils.getClientIp();
+                String refreshToken = redisService.get(Redis.TOKEN_PREFIX + clientIp + accessToken, String.class);
+                if (StringUtils.hasText(refreshToken)) { // 레디스에서 리프레시 토큰 조회
+                    Pair<Boolean, Claims> refreshTokenPair = jwtService.validateToken(refreshToken);
+                    if (refreshTokenPair.getFirst()) { // 조회 완료 후 검사
+                        TokenDto tokenDto = jwtService.reissueToken(accessTokenPair.getSecond()); // 액세스토큰 / 리프레시토큰 재발급
+                        authService.setAuthentication(tokenDto.getAccessToken());
+                        redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
+                        response.setHeader(Token.AUTHORIZATION_HEADER, Token.GRANT_TYPE + " " + tokenDto.getAccessToken());
+                    }
+                }
+            }
         }
 
 
@@ -38,9 +58,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private String resolveToken(HttpServletRequest request) {
         String token = request.getHeader(Token.AUTHORIZATION_HEADER);
+
         if (!StringUtils.hasText(token) || !token.startsWith(Token.GRANT_TYPE)) {
             return null;
         }
-        return token.substring(Math.min(token.length(),7));
+        return token.substring(Math.min(token.length(), 7));
     }
 }

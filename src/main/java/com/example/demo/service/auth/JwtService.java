@@ -2,13 +2,12 @@ package com.example.demo.service.auth;
 
 import com.example.demo.common.auth.PrincipalDetails;
 import com.example.demo.common.constants.Token;
+import com.example.demo.common.utils.Pair;
 import com.example.demo.dto.token.TokenDto;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.security.Key;
-import java.security.Principal;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -27,27 +25,27 @@ import java.util.stream.Collectors;
 public class JwtService {
 
     private final Key key;
+
     public TokenDto generateToken(Authentication authentication) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
         long now = new Date().getTime();
         Object principal = authentication.getPrincipal();
-        if(!(principal instanceof PrincipalDetails principalDetails)) { // jwt 필터를 거쳤을 때에만 UserDetails class
+        if (!(principal instanceof PrincipalDetails principalDetails)) { // 인증을 거쳤을 때에만 토큰 생성 jwtFilter 거칠 시 UserDetails 반환 -> 이제 거쳐도 PrincipalDetails 반환되게끔 수정함
             throw new RuntimeException();
         }
         Long id = principalDetails.user().getId(); // stateless 해야하기 때문에 DB 조회하지 않음 -> AuditorAware에서 조회할 수 있게끔 id값 넣어줌
         Date tokenExpiresIn = new Date(now + Token.ACCESS_TOKEN_EXPIRE_TIME);
         String accessToken = Jwts.builder()
-                .setSubject(authentication.getName())
+                .setSubject(principalDetails.getName())
                 .claim(Token.AUTHORITIES_KEY, authorities)
                 .claim("id", id)
+                .claim("username", principalDetails.getUsername())
                 .setExpiration(tokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
         String refreshToken = Jwts.builder()
-//                .setSubject(authentication.getName())
-                .claim(Token.AUTHORITIES_KEY, authorities)
                 .setExpiration(new Date(now + Token.REFRESH_TOKEN_EXPIRE_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
@@ -57,21 +55,56 @@ public class JwtService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .tokenExpiresIn(tokenExpiresIn.getTime())
-                .username(authentication.getName())
+                .username(principalDetails.getUsername())
                 .build();
     }
-    public boolean validateToken(String token) {
-        if(!StringUtils.hasText(token)){
-            return false;
+    public TokenDto reissueToken(Claims claims) {
+        if(claims == null){
+            throw new IllegalArgumentException("Claims cannot be null");
+        }
+        String authorities = claims.get(Token.AUTHORITIES_KEY, String.class);
+        Long id = claims.get("id", Long.class);
+        String sub = claims.get("sub", String.class);
+        String username = claims.get("username", String.class);
+        long now = new Date().getTime();
+        Date tokenExpiresIn = new Date(now + Token.ACCESS_TOKEN_EXPIRE_TIME);
+        String accessToken = Jwts.builder()
+                .setSubject(sub)
+                .claim(Token.AUTHORITIES_KEY, authorities)
+                .claim("id", id)
+                .claim("username", username)
+                .setExpiration(tokenExpiresIn)
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+        String refreshToken = Jwts.builder()
+                .setExpiration(new Date(now + Token.REFRESH_TOKEN_EXPIRE_TIME))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        return TokenDto.builder()
+                .grantType(Token.GRANT_TYPE)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenExpiresIn(tokenExpiresIn.getTime())
+                .username(username)
+                .build();
+    }
+
+    public Pair<Boolean, Claims> validateToken(String token) {
+        if (!StringUtils.hasText(token)) {
+            return Pair.of(false, null);
         }
         try {
             Claims claims = parseClaims(token);
-            return claims.getExpiration().after(new Date());
-        } catch (Exception e){
-            return false;
+            return Pair.of(claims.getExpiration().after(new Date()), null);
+        } catch (ExpiredJwtException e) {
+            return Pair.of(false, e.getClaims());
+        } catch (Exception e) {
+            return Pair.of(false, null);
         }
     }
-    public Claims parseClaims(String token){
+
+    public Claims parseClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
