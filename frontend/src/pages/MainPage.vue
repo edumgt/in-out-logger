@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import useUserStore from '@/stores/userStore'
@@ -10,9 +10,7 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const tokenStore = useTokenStore()
-
 const { username } = storeToRefs(userStore)
-
 const { token: queryToken, username: queryUsername } = route.query
 if (queryToken && queryUsername) {
   tokenStore.setToken(queryToken as string)

@@ -80,7 +80,8 @@ const handleSubmit = async () => {
     const { data } = response
     let token = response.headers.authorization
     if(!token.startsWith('Bearer')){
-      throw new Error()
+      alert(response.data)
+      return
     }
     token = token.slice(7)
     setToken(token)
