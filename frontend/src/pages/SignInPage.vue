@@ -80,7 +80,7 @@ const handleSubmit = async () => {
     const { data } = response
     let token = response.headers.authorization
     if(!token.startsWith('Bearer')){
-      alert(response.data)
+      alert('로그인에 실패했습니다.')
       return
     }
     token = token.slice(7)
