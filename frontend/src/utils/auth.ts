@@ -1,7 +1,7 @@
-import useTokenStore from '../stores/tokenStore.ts'
+import {useStore} from "vuex";
 
 export const isTokenValid = () => {
-  const { getToken } = useTokenStore()
+  const store = useStore()
   // const token = localStorage.getItem('token')
-  return !!getToken
+  return !!store.getters.getToken
 }

@@ -1,6 +1,6 @@
 import _axios from 'axios'
 import router from '../router'
-import useTokenStore from '../stores/tokenStore.ts'
+import { useStore } from 'vuex'
 
 const axios = _axios.create({
   headers: {
@@ -9,8 +9,8 @@ const axios = _axios.create({
 })
 // 요청 인터셉터
 axios.interceptors.request.use(config => {
-  const { getToken } = useTokenStore()
-  config.headers.Authorization = `Bearer ${getToken}`
+  const store = useStore()
+  config.headers.Authorization = `Bearer ${store.getters.getToken}`
   return config
 }, error => {
   return Promise.reject(error)

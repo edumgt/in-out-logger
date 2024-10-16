@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { isTokenValid } from '@/utils/auth.ts'
-import useUserStore from '@/stores/userStore.ts'
+import { useStore } from 'vuex'
 
 const isValid = isTokenValid()
-const { setUsername } = useUserStore()
+const store = useStore()
 if (!isValid) {
-  setUsername('')
+  store.commit('setUsername', '')
 }
 </script>
 

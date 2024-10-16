@@ -54,13 +54,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { reactive } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import useUserStore from '@/stores/userStore.ts'
+import {reactive} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
 import axios from '@/utils/axios.ts'
-import useTokenStore from '@/stores/tokenStore.ts'
+import {useStore} from "vuex";
 
-
+const store = useStore()
 const route = useRoute()
 const form = reactive({
   email: '',
@@ -70,8 +69,6 @@ const id = route.query.id
 if (id) {
   form.email = id as string
 }
-const { setUsername } = useUserStore()
-const { setToken } = useTokenStore()
 const router = useRouter()
 
 const handleSubmit = async () => {
@@ -84,8 +81,8 @@ const handleSubmit = async () => {
       return
     }
     token = token.slice(7)
-    setToken(token)
-    setUsername(data.username)
+    store.commit('setToken', token)
+    store.commit('setUsername', data.username)
     await router.push('/')
   } catch (e: any) {
     alert(e.response.data)
