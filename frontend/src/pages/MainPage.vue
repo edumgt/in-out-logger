@@ -6,6 +6,7 @@ import useUserStore from '@/stores/pinia/userStore.ts'
 import useTokenStore from '@/stores/pinia/tokenStore.ts'
 import axios from '@/utils/axios'
 import { useStore } from 'vuex'
+import { useProgress } from '@/utils/proxy.ts'
 
 const route = useRoute()
 const router = useRouter()
@@ -57,7 +58,7 @@ const logout = () => {
         <a href="http://localhost/oauth2/authorization/kakao" class="block w-full text-center py-2 px-4 bg-yellow-500 text-black rounded hover:bg-yellow-600 transition duration-200">
           카카오 로그인 </a>
 
-        <button @click="checkAuth" class="w-full py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600 transition duration-200" :disabled="isLoading">
+        <button @click="useProgress(checkAuth)" class="w-full py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600 transition duration-200" :disabled="isLoading">
           {{ isLoading ? '확인 중...' : '로그인 체크' }}
         </button>
 

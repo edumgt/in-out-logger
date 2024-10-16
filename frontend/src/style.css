@@ -2,3 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+#nprogress {
+    pointer-events: none;
+}
+
+#nprogress .bar {
+    background: limegreen;
+    position: fixed;
+    z-index: 1031;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+}
+
+#nprogress .peg {
+    display: block;
+    position: absolute;
+    z-index: 1031;
+    right: 0;
+    width: 100px;
+    height: 100%;
+    box-shadow: 0 0 10px green, 0 0 5px green;
+    opacity: 1.0;
+}
+
+#nprogress .spinner {
+    display: block;
+    position: fixed;
+    z-index: 1031;
+    top: 15px;
+    right: 15px;
+}
+
+#nprogress .spinner .spinner-icon {
+    width: 18px;
+    height: 18px;
+    border: solid 2px transparent;
+    border-top-color: green; /* 원하는 색상으로 변경 가능 */
+    border-left-color: green; /* 원하는 색상으로 변경 가능 */
+    border-radius: 50%;
+    animation: nprogress-spinner 400ms linear infinite;
+}
+
+@keyframes nprogress-spinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
