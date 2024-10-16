@@ -1,4 +1,4 @@
-package com.example.demo.tool;
+package com.example.demo.common.tools;
 
 import lombok.experimental.UtilityClass;
 

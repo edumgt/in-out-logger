@@ -3,7 +3,7 @@ package com.example.demo.common.filter;
 import com.example.demo.common.constants.Redis;
 import com.example.demo.common.constants.Token;
 import com.example.demo.common.utils.HttpUtils;
-import com.example.demo.common.utils.Pair;
+import com.example.demo.common.tools.Pair;
 import com.example.demo.dto.token.TokenDto;
 import com.example.demo.service.auth.AuthService;
 import com.example.demo.service.auth.JwtService;

@@ -1,4 +1,4 @@
-package com.example.demo.common.utils;
+package com.example.demo.common.tools;
 
 public class Pair<F,S> {
     private final F first;
