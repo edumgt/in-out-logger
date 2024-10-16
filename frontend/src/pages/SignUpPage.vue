@@ -99,6 +99,7 @@ const onSubmit = handleSubmit(async (values) => {
       await router.push(`/sign-in?id=${values.email}`)
     } catch (e: any) {
       alert(e.response.data)
+      throw e
     }
   },
   ({ errors }) => { // validation 실패 콜백함수

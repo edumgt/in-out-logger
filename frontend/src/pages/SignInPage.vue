@@ -86,6 +86,7 @@ const handleSubmit = async () => {
     await router.push('/')
   } catch (e: any) {
     alert(e.response.data)
+    throw e
   }
 }
 

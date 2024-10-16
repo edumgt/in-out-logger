@@ -1,15 +1,20 @@
-import {createLogger, createStore} from 'vuex'
-import authModule, {AuthModuleState} from "./modules/auth.ts";
-
+import { createLogger, createStore } from 'vuex'
+import authModule, { AuthModuleState } from './modules/auth.ts'
+import createPersistedState from 'vuex-persistedstate';
 export interface VuexModules {
-    authModule: AuthModuleState;
+  authModule: AuthModuleState;
+}
+
+const plugins = [createPersistedState({
+  paths: ['authModule'] // persist 적용 module names
+})]
+if (import.meta.env.MODE !== 'production') {
+  plugins.push(createLogger({ collapsed: false }))
 }
 
 export default createStore({
-    modules: {
-        authModule,
-    },
-    plugins: import.meta.env.MODE === 'production' ? [] : [createLogger({
-        collapsed: false
-    })]
+  modules: {
+    authModule
+  },
+  plugins
 })

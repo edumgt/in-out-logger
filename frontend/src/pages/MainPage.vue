@@ -19,7 +19,6 @@ if (queryToken && queryUsername) {
 const isLoading = ref(false)
 const authStatus = ref('')
 
-console.log('store.getters.getUsername', store.getters.getUsername)
 const isLoggedIn = computed(() => !!store.getters.getUsername)
 
 const checkAuth = async () => {
@@ -27,8 +26,9 @@ const checkAuth = async () => {
   try {
     const response = await axios.get('/api/auth/test')
     authStatus.value = `인증 성공 (상태 코드: ${response.status})`
-  } catch (error) {
+  } catch (e) {
     authStatus.value = '인증 실패'
+    throw e
   } finally {
     isLoading.value = false
   }
