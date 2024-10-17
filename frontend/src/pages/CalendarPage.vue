@@ -3,7 +3,7 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import { h, nextTick, onMounted, ref } from 'vue'
+import { computed, h, nextTick, onMounted, ref } from 'vue'
 import axios from '@/utils/axios.ts'
 import { useProgress } from '@/utils/proxy.ts'
 import { useStore } from 'vuex'
@@ -25,7 +25,8 @@ import { DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
 //   }
 // ]
 
-const calendarRef = ref<any>(null)
+const calendarRef = ref<InstanceType<typeof FullCalendar>>()
+const calendarApi = computed(() => (calendarRef.value as InstanceType<typeof FullCalendar>).getApi())
 
 const handleWeekendsToggle = () => {
   calendarOptions.value.weekends = !calendarOptions.value.weekends // update a property
@@ -118,11 +119,10 @@ const fetchInitialEvents = async () => {
 onMounted(async () => {
   await nextTick()
   const events = await fetchInitialEvents();
-  const api = calendarRef?.value?.getApi()
   for(const { id, title, start, end} of events){
     console.log('onMounted start end',start,end)
-    console.log('api', api)
-    api?.addEvent({
+    console.log('api', calendarApi.value)
+    calendarApi.value.addEvent({
       id,
       title,
       start,
@@ -159,6 +159,8 @@ const checkOutProgress = useProgress(handleCheckOut)
 
 const store = useStore()
 
+const calendarEvents = computed(() => calendarApi.value?.getEvents())
+
 </script>
 
 <template>
@@ -173,16 +175,16 @@ const store = useStore()
           weekends </label>
       </div>
       <div class='sidebar-section'>
-<!--        <h2>All Events ({{ calendarRef.value.getApi().events.length }})</h2>-->
+<!--        <h2>All Events ({{ calendarEvents.length }})</h2>-->
 <!--        <ul>-->
-<!--          <li v-for='event in calendarRef.value.getApi().events' :key='event.id'>-->
+<!--          <li v-for='event in calendarEvents' :key='event.id'>-->
 <!--            <b>{{ event.startStr }}</b> <i>{{ event.title }}</i>-->
 <!--          </li>-->
 <!--        </ul>-->
       </div>
     </div>
     <div class='calendar-wrap'>
-      <FullCalendar class='calendar-app' :ref="calendarRef" :options='calendarOptions'>
+      <FullCalendar class='calendar-app' ref="calendarRef" :options='calendarOptions'>
         <template v-slot:eventContent='arg'>
           <b>{{ arg.timeText }}</b> <i>{{ arg.event.title }}</i>
         </template>
