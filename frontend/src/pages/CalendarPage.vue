@@ -10,23 +10,11 @@ import { useStore } from 'vuex'
 import { InputValue } from '@/stores/vuex/modules/modal.ts'
 import { DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
 
-// let todayStr = new Date().toISOString().replace(/T.*$/, '') // YYYY-MM-DD of today
-// const INITIAL_EVENTS = [
-//   {
-//     id: 999,
-//     title: 'All-day event',
-//     start: todayStr
-//     // end: endStr
-//   },
-//   {
-//     id: 9898,
-//     title: 'Timed event',
-//     start: todayStr + 'T12:00:00'
-//   }
-// ]
 
 const calendarRef = ref<InstanceType<typeof FullCalendar>>()
 const calendarApi = computed(() => (calendarRef.value as InstanceType<typeof FullCalendar>).getApi())
+const currentEvents = ref<EventApi[]>([])
+
 
 const handleWeekendsToggle = () => {
   calendarOptions.value.weekends = !calendarOptions.value.weekends // update a property
@@ -80,8 +68,8 @@ const handleEventClick = (clickInfo: EventClickArg) => {
   })
 }
 const handleEvents = (events: EventApi[]) => {
-
-  console.log('set', events.length)
+  currentEvents.value = events
+  console.log('set', currentEvents.value)
 }
 
 const calendarOptions = ref<object>({
@@ -104,7 +92,7 @@ const calendarOptions = ref<object>({
   weekends: true,
   select: handleDateSelect,
   eventClick: handleEventClick,
-  eventsSet: handleEvents,
+  eventsSet: handleEvents
   /* you can update a remote database when these fire:
   eventAdd:
   eventChange:
@@ -112,16 +100,14 @@ const calendarOptions = ref<object>({
   */
 })
 const fetchInitialEvents = async () => {
-  const response = await axios.get('/api/calendar/events');
+  const response = await axios.get('/api/calendar/events')
   return response.data
 }
 
 onMounted(async () => {
   await nextTick()
-  const events = await fetchInitialEvents();
-  for(const { id, title, start, end} of events){
-    console.log('onMounted start end',start,end)
-    console.log('api', calendarApi.value)
+  const events = await fetchInitialEvents()
+  for (const { id, title, start, end } of events) {
     calendarApi.value.addEvent({
       id,
       title,
@@ -159,8 +145,6 @@ const checkOutProgress = useProgress(handleCheckOut)
 
 const store = useStore()
 
-const calendarEvents = computed(() => calendarApi.value?.getEvents())
-
 </script>
 
 <template>
@@ -175,12 +159,12 @@ const calendarEvents = computed(() => calendarApi.value?.getEvents())
           weekends </label>
       </div>
       <div class='sidebar-section'>
-<!--        <h2>All Events ({{ calendarEvents.length }})</h2>-->
-<!--        <ul>-->
-<!--          <li v-for='event in calendarEvents' :key='event.id'>-->
-<!--            <b>{{ event.startStr }}</b> <i>{{ event.title }}</i>-->
-<!--          </li>-->
-<!--        </ul>-->
+        <h2>All Events ({{ currentEvents.length }})</h2>
+        <ul>
+          <li v-for='event in currentEvents' :key='event.id'>
+            <b>{{ event.startStr }}</b> <i>{{ event.title }}</i>
+          </li>
+        </ul>
       </div>
     </div>
     <div class='calendar-wrap'>
