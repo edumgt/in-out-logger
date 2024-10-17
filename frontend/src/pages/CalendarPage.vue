@@ -3,63 +3,85 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import { reactive, ref, watchEffect } from 'vue'
-import { toggle } from '../components/Modal.vue'
+import { h, nextTick, onMounted, ref } from 'vue'
 import axios from '@/utils/axios.ts'
 import { useProgress } from '@/utils/proxy.ts'
+import { useStore } from 'vuex'
+import { InputValue } from '@/stores/vuex/modules/modal.ts'
+import { DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
 
-let eventGuid = 0
-let todayStr = new Date().toISOString().replace(/T.*$/, '') // YYYY-MM-DD of today
-let endStr = new Date(2024, 10,17).toISOString().replace(/T.*$/, '')
-const createEventId = () => {
-  return String(eventGuid++)
-}
-const INITIAL_EVENTS = [
-  {
-    id: createEventId(),
-    title: 'All-day event',
-    start: todayStr,
-    // end: endStr
-  },
-  {
-    id: createEventId(),
-    title: 'Timed event',
-    start: todayStr + 'T12:00:00'
-  }
-]
-const currentEvents = ref<any[]>([])
-watchEffect(() => {
-  console.log(currentEvents.value)
-})
+// let todayStr = new Date().toISOString().replace(/T.*$/, '') // YYYY-MM-DD of today
+// const INITIAL_EVENTS = [
+//   {
+//     id: 999,
+//     title: 'All-day event',
+//     start: todayStr
+//     // end: endStr
+//   },
+//   {
+//     id: 9898,
+//     title: 'Timed event',
+//     start: todayStr + 'T12:00:00'
+//   }
+// ]
+
+const calendarRef = ref<any>(null)
+
 const handleWeekendsToggle = () => {
   calendarOptions.value.weekends = !calendarOptions.value.weekends // update a property
 }
-const handleDateSelect = (selectInfo: any) => {
-  let title = prompt('Please enter a new title for your event')
-  let calendarApi = selectInfo.view.calendar
 
-  calendarApi.unselect() // clear date selection
 
-  if (title) {
-    calendarApi.addEvent({
-      id: createEventId(),
-      title,
-      start: selectInfo.startStr,
-      end: selectInfo.endStr,
-      allDay: selectInfo.allDay
-    })
-  }
+const handleDateSelect = (selectInfo: DateSelectArg) => {
+  store.commit('setModal', {
+    isOpen: true,
+    modalType: 'input',
+    content: h('p', '일정명을 입력해주세요.'),
+    placeholder: '일정명',
+    options: {
+      propagation: true
+    },
+    onConfirm: async (inputValue: InputValue) => {
+      let calendarApi = selectInfo.view.calendar
+      calendarApi.unselect() // clear date selection
+
+      if (!inputValue) {
+        return
+      }
+      const response = await axios.post('/api/calendar/events', {
+        title: inputValue,
+        start: selectInfo.startStr,
+        end: selectInfo.endStr
+      })
+      const { id, start, end, title } = response.data
+      calendarApi.addEvent({
+        id,
+        title,
+        start,
+        end,
+        allDay: true
+      })
+    }
+  })
+
 }
 
-const handleEventClick = (clickInfo: any) => {
-  if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
-    clickInfo.event.remove()
-  }
+const handleEventClick = (clickInfo: EventClickArg) => {
+  store.commit('setModal', {
+    isOpen: true,
+    modalType: 'alert',
+    content: h('p', '일정을 삭제할까요?'),
+    onConfirm: async () => {
+      const response = await axios.delete(`/api/calendar/events/${clickInfo.event.id}`)
+      console.log(response)
+      clickInfo.event.remove()
+    }
+  })
 }
-const handleEvents = (events: any[]) => {
-  currentEvents.value = events
-}
+const handleEvents = (events: EventApi[]) => {
 
+  console.log('set', events.length)
+}
 
 const calendarOptions = ref<object>({
   plugins: [
@@ -74,7 +96,6 @@ const calendarOptions = ref<object>({
   },
   initialView: 'dayGridMonth',
   initialDate: new Date(),
-  initialEvents: INITIAL_EVENTS,
   editable: true,
   selectable: true,
   selectMirror: true,
@@ -82,23 +103,62 @@ const calendarOptions = ref<object>({
   weekends: true,
   select: handleDateSelect,
   eventClick: handleEventClick,
-  eventsSet: handleEvents
+  eventsSet: handleEvents,
   /* you can update a remote database when these fire:
   eventAdd:
   eventChange:
   eventRemove:
   */
 })
+const fetchInitialEvents = async () => {
+  const response = await axios.get('/api/calendar/events');
+  return response.data
+}
+
+onMounted(async () => {
+  await nextTick()
+  const events = await fetchInitialEvents();
+  const api = calendarRef?.value?.getApi()
+  for(const { id, title, start, end} of events){
+    console.log('onMounted start end',start,end)
+    console.log('api', api)
+    api?.addEvent({
+      id,
+      title,
+      start,
+      end,
+      allDay: true
+    })
+  }
+})
 
 const handleCheckIn = async () => {
   try {
-    await axios.post('api/commutes')
-  } catch (e){
-    console.error(e)
+    await axios.post('/api/commutes')
+  } catch (e: any) {
+    store.commit('setModal', {
+      isOpen: true,
+      content: h('p', e.response.data)
+    })
+    throw e
+  }
+}
+const handleCheckOut = async () => {
+  try {
+    await axios.patch('/api/commutes')
+  } catch (e: any) {
+    store.commit('setModal', {
+      isOpen: true,
+      content: h('p', e.response.data)
+    })
     throw e
   }
 }
 const checkInProgress = useProgress(handleCheckIn)
+const checkOutProgress = useProgress(handleCheckOut)
+
+const store = useStore()
+
 </script>
 
 <template>
@@ -106,23 +166,23 @@ const checkInProgress = useProgress(handleCheckIn)
     <div class='sidebar'>
       <div class='sidebar-section flex flex-col gap-2'>
         <button @click="checkInProgress">출근</button>
-        <button @click="">퇴근</button>
+        <button @click="checkOutProgress">퇴근</button>
       </div>
       <div class='sidebar-section'>
         <label> <input type='checkbox' :checked='calendarOptions.weekends' @change='handleWeekendsToggle' /> toggle
           weekends </label>
       </div>
       <div class='sidebar-section'>
-        <h2>All Events ({{ currentEvents.length }})</h2>
-        <ul>
-          <li v-for='event in currentEvents' :key='event.id'>
-            <b>{{ event.startStr }}</b> <i>{{ event.title }}</i>
-          </li>
-        </ul>
+<!--        <h2>All Events ({{ calendarRef.value.getApi().events.length }})</h2>-->
+<!--        <ul>-->
+<!--          <li v-for='event in calendarRef.value.getApi().events' :key='event.id'>-->
+<!--            <b>{{ event.startStr }}</b> <i>{{ event.title }}</i>-->
+<!--          </li>-->
+<!--        </ul>-->
       </div>
     </div>
     <div class='calendar-wrap'>
-      <FullCalendar class='calendar-app' :options='calendarOptions'>
+      <FullCalendar class='calendar-app' :ref="calendarRef" :options='calendarOptions'>
         <template v-slot:eventContent='arg'>
           <b>{{ arg.timeText }}</b> <i>{{ arg.event.title }}</i>
         </template>

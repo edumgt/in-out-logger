@@ -1,7 +1,5 @@
 package com.example.demo.commute.controller;
 
-import com.example.demo.commute.dto.CommuteDto;
-import com.example.demo.commute.entity.Commute;
 import com.example.demo.commute.service.CommuteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,17 +19,17 @@ public class CommuteController {
     public ResponseEntity<?> getAllCommutes() {
         return ResponseEntity.status(200).build();
     }
+
     @PostMapping
-    public ResponseEntity<?> createCommute() {
-        commuteService.createCommute();
+    public ResponseEntity<?> checkIn() {
+        commuteService.checkIn();
         return ResponseEntity.status(201).build();
     }
-    @PatchMapping("/{commuteId}")
-    public ResponseEntity<?> updateCommute(@RequestBody Commute commute, @PathVariable String commuteId) {
-        return ResponseEntity.status(200).build();
+
+    @PatchMapping
+    public ResponseEntity<?> checkOut() {
+        commuteService.checkOut();
+        return ResponseEntity.status(204).build();
     }
-    @DeleteMapping("/{commuteId}")
-    public ResponseEntity<?> create(@PathVariable String commuteId){
-        return ResponseEntity.status(200).build();
-    }
+
 }

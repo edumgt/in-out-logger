@@ -1,3 +1,51 @@
+
+<script setup lang="ts">
+import { h, reactive } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import axios from '@/utils/axios.ts'
+import { useStore } from 'vuex'
+import { ModalModuleState } from '@/stores/vuex/modules/modal.ts'
+import { useProgress } from '@/utils/proxy.ts'
+
+const store = useStore()
+const route = useRoute()
+const form = reactive({
+  email: '',
+  password: ''
+})
+const id = route.query.id
+if (id) {
+  form.email = id as string
+}
+const router = useRouter()
+
+const handleSubmit = async () => {
+  try {
+    const response = await axios.post<Token>('/api/auth/sign-in', form)
+    const { data } = response
+    let token = response.headers.authorization
+    if (!token.startsWith('Bearer')) {
+      store.commit<ModalModuleState>({
+        isOpen: true,
+        content: () => h('p', '로그인에 실패했습니다.')
+      })
+      return
+    }
+    token = token.slice(7)
+    store.commit('setToken', token)
+    store.commit('setUsername', data.username)
+    await router.push('/')
+  } catch (e: any) {
+    store.commit('setModal', {
+      isOpen: true,
+      content: () => h('p', e.response.data || '로그인에 실패했습니다.')
+    })
+    throw e
+  }
+}
+const handleSubmitProgress = useProgress(handleSubmit)
+
+</script>
 <template>
   <div class="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
@@ -7,7 +55,7 @@
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-        <form @submit.prevent="handleSubmit" class="space-y-6">
+        <form @submit.prevent="handleSubmitProgress" class="space-y-6">
 
           <div>
             <label for="email" class="block text-sm font-medium text-gray-700"> 이메일 </label>
@@ -53,41 +101,3 @@
     </div>
   </div>
 </template>
-<script setup lang="ts">
-import {reactive} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
-import axios from '@/utils/axios.ts'
-import {useStore} from "vuex";
-
-const store = useStore()
-const route = useRoute()
-const form = reactive({
-  email: '',
-  password: ''
-})
-const id = route.query.id
-if (id) {
-  form.email = id as string
-}
-const router = useRouter()
-
-const handleSubmit = async () => {
-  try {
-    const response = await axios.post<Token>('/api/auth/sign-in', form)
-    const { data } = response
-    let token = response.headers.authorization
-    if(!token.startsWith('Bearer')){
-      alert('로그인에 실패했습니다.')
-      return
-    }
-    token = token.slice(7)
-    store.commit('setToken', token)
-    store.commit('setUsername', data.username)
-    await router.push('/')
-  } catch (e: any) {
-    alert(e.response.data || '로그인에 실패했습니다.')
-    throw e
-  }
-}
-
-</script>

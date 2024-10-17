@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue'
 import { useStore } from 'vuex'
-
+import { computed } from 'vue'
 
 const store = useStore()
-const isModalOpen = computed(() => store.getters.isAlertModalOpen)
-
-watchEffect(() => {
-  const value = isModalOpen.value ? 'hidden' : 'auto'
-  document.querySelector('html')!.style.overflow = value
-})
-
+const isModalOpen = computed(() => store.getters.isInputModalOpen)
 const handleClose = computed(() => store.getters.handleModalClose)
-
 const handleConfirm = computed(() => store.getters.handleModalConfirm)
+const inputValue = computed(() => store.getters.getInputValue)
+
+const updateInputState = (e) => {
+  // 단방향 바인딩하고 react처럼 state 변경하는 식으로 처리
+  store.commit('setInputValue', e.target.value)
+}
 
 </script>
 
@@ -22,6 +20,13 @@ const handleConfirm = computed(() => store.getters.handleModalConfirm)
     <div class="relative bg-white rounded-lg shadow-xl p-6 m-4 max-w-xl w-full" @click.stop="">
       <div v-show="isModalOpen" class="mt-4">
         <component :is="store.getters.getContent" class="text-lg mb-4"></component>
+        <input
+          :value="inputValue"
+          @input="updateInputState"
+          type="text"
+          class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500 mb-4"
+          :placeholder="store.getters.getPlaceholder"
+        />
         <div class="flex justify-end space-x-4">
           <button class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition duration-300" @click="handleClose">닫기</button>
           <button class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300" @click="handleConfirm">확인</button>

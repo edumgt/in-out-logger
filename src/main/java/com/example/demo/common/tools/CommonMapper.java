@@ -1,9 +1,5 @@
-package com.example.demo.commute.mapper;
+package com.example.demo.common.tools;
 
-import com.example.demo.common.dto.CommonDto;
-import com.example.demo.common.entity.CommonProperties;
-import com.example.demo.commute.dto.CommuteDto;
-import com.example.demo.commute.entity.Commute;
 import com.example.demo.employee.entity.Employee;
 import org.mapstruct.*;
 

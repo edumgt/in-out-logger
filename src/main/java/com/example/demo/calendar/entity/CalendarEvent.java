@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,7 +23,7 @@ public class CalendarEvent extends CommonProperties {
     @Column(columnDefinition = "VARCHAR(100)", nullable = false)
     private String title;
     @Column
-    private LocalDateTime start;
+    private LocalDate start;
     @Column
-    private LocalDateTime end;
+    private LocalDate end;
 }

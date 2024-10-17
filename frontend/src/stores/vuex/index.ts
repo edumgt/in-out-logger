@@ -1,8 +1,10 @@
 import { createLogger, createStore } from 'vuex'
 import authModule, { AuthModuleState } from './modules/auth.ts'
 import createPersistedState from 'vuex-persistedstate';
+import modalModule ,{ ModalModuleState } from './modules/modal.ts'
 export interface VuexModules {
   authModule: AuthModuleState;
+  modalModule: ModalModuleState;
 }
 
 const plugins = [createPersistedState({
@@ -14,7 +16,8 @@ if (import.meta.env.MODE !== 'production') {
 
 export default createStore({
   modules: {
-    authModule
+    authModule,
+    modalModule
   },
   plugins
 })
