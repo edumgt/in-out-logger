@@ -1,7 +1,7 @@
 package com.example.demo.common.config;
 
 
-import com.example.demo.model.SecretConfig;
+import com.example.demo.common.model.SecretConfig;
 import com.example.demo.common.tools.SystemEnvironment;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

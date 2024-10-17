@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body,
+#app {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.main-wrap {
+    display: flex;
+    min-height: 100%;
+    font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
 #nprogress {
     pointer-events: none;
 }
@@ -48,4 +63,27 @@
 @keyframes nprogress-spinner {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* dimmed */
+.modal-wrap {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* modal or popup */
+.modal-container {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 550px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-sizing: border-box;
 }

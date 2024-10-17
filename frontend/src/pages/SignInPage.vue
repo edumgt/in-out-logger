@@ -85,7 +85,7 @@ const handleSubmit = async () => {
     store.commit('setUsername', data.username)
     await router.push('/')
   } catch (e: any) {
-    alert(e.response.data)
+    alert(e.response.data || '로그인에 실패했습니다.')
     throw e
   }
 }

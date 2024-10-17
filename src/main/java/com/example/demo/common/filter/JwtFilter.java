@@ -4,10 +4,10 @@ import com.example.demo.common.constants.Redis;
 import com.example.demo.common.constants.Token;
 import com.example.demo.common.utils.HttpUtils;
 import com.example.demo.common.tools.Pair;
-import com.example.demo.dto.token.TokenDto;
-import com.example.demo.service.auth.AuthService;
-import com.example.demo.service.auth.JwtService;
-import com.example.demo.service.redis.RedisService;
+import com.example.demo.employee.dto.token.TokenDto;
+import com.example.demo.employee.service.AuthService;
+import com.example.demo.employee.service.JwtService;
+import com.example.demo.common.service.redis.RedisService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -51,7 +52,6 @@ public class JwtFilter extends OncePerRequestFilter {
                 }
             }
         }
-
 
         filterChain.doFilter(request, response);
     }

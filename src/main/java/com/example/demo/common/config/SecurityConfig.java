@@ -2,8 +2,8 @@ package com.example.demo.common.config;
 
 import com.example.demo.common.filter.JwtFilter;
 import com.example.demo.common.handler.OAuth2SuccessHandler;
-import com.example.demo.model.SecretConfig;
-import com.example.demo.service.auth.OAuth2UserService;
+import com.example.demo.common.model.SecretConfig;
+import com.example.demo.employee.service.OAuth2UserService;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,14 +11,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -42,6 +41,20 @@ public class SecurityConfig {
 
     @Value("${oauth2.redirect-uri}")
     private String oauth2RedirectUri;
+
+    @Bean
+    public RoleHierarchy roleHierarchy(){
+        return RoleHierarchyImpl.withDefaultRolePrefix()
+                .role("CEO").implies("HEAD")
+                .role("HEAD").implies("SENIOR_MANAGER")
+                .role("SENIOR_MANAGER").implies("MANAGER")
+                .role("MANAGER").implies("SENIOR_ASSOCIATE")
+                .role("SENIOR_ASSOCIATE").implies("ASSOCIATE")
+                .role("ASSOCIATE").implies("STAFF")
+                .role("STAFF").implies("INTERN")
+                .build();
+    }
+
 
     @Bean
     public PasswordEncoder bCryptPasswordEncoder() {

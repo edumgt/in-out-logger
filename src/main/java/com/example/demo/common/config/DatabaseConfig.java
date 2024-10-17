@@ -1,8 +1,8 @@
 package com.example.demo.common.config;
 
-import com.example.demo.common.auth.PrincipalDetails;
-import com.example.demo.entity.User;
-import com.example.demo.model.SecretConfig;
+import com.example.demo.employee.model.PrincipalDetails;
+import com.example.demo.employee.entity.Employee;
+import com.example.demo.common.model.SecretConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import javax.sql.DataSource;
 import java.util.Optional;
 
 @Configuration
-@EnableJpaRepositories(basePackages = "com.example.demo.repository")
+@EnableJpaRepositories(basePackages = "com.example.demo.*.repository")
 @EnableJpaAuditing
 @RequiredArgsConstructor
 public class DatabaseConfig {
@@ -37,20 +37,15 @@ public class DatabaseConfig {
 
 
     @Bean
-    public AuditorAware<User> auditorProvider() {
+    public AuditorAware<Employee> auditorProvider() {
         return () -> {
-//            if(true){
-//                return Optional.of(User.builder()
-//                        .id(15L)
-//                        .build());
-//            } 이렇게 넣어도 id 15로 들어감. 영속성이 없어도 됨
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if(authentication == null){
                 return Optional.empty();
             }
             Object principal = authentication.getPrincipal();
             if(principal instanceof PrincipalDetails principalDetails) {
-                return Optional.of(principalDetails.user());
+                return Optional.of(principalDetails.employee());
             }
             return Optional.empty();
         };

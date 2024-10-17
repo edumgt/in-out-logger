@@ -2,6 +2,7 @@ import {createRouter, createWebHistory, RouteRecordRaw} from 'vue-router';
 import SignInPage from '../pages/SignInPage.vue';
 import SignUpPage from '../pages/SignUpPage.vue';
 import MainPage from '../pages/MainPage.vue';
+import CalendarPage from '../pages/CalendarPage.vue'
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
@@ -18,6 +19,11 @@ const routes: Array<RouteRecordRaw> = [
         name: 'signUp',
         component: SignUpPage
     },
+    {
+        path: '/calendar',
+        name: 'calendar',
+        component: CalendarPage
+    }
 ];
 
 const router = createRouter({

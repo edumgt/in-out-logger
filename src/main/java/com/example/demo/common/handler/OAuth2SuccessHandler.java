@@ -3,14 +3,11 @@ package com.example.demo.common.handler;
 import com.example.demo.common.constants.Redis;
 import com.example.demo.common.constants.Token;
 import com.example.demo.common.utils.HttpUtils;
-import com.example.demo.dto.token.TokenDto;
-import com.example.demo.service.auth.JwtService;
-import com.example.demo.service.redis.RedisService;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
+import com.example.demo.employee.dto.token.TokenDto;
+import com.example.demo.employee.service.JwtService;
+import com.example.demo.common.service.redis.RedisService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
@@ -40,7 +37,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendUri)
                 .queryParam("token", tokenDto.getAccessToken())
-                .queryParam("username", authentication.getName())
+                .queryParam("name", authentication.getName())
                 .encode()
                 .build()
                 .toUriString();

@@ -9,9 +9,9 @@
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
         <form @submit.prevent="onSubmit" class="space-y-6">
           <div>
-            <label for="username" class="block text-sm font-medium text-gray-700"> 닉네임 </label>
+            <label for="name" class="block text-sm font-medium text-gray-700"> 이름 </label>
             <div class="mt-1">
-              <input v-model="username" v-bind="usernameProps" name="username" type="text" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <input v-model="name" v-bind="nameProps" name="name" type="text" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
             </div>
           </div>
 
@@ -72,7 +72,7 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 
 const signUpSchema = yup.object({
-  username: yup.string().required('닉네임은 필수입니다.').min(4, '닉네임을 최소 4자 이상 입력하세요.').max(12, '닉네임은 최대 12자까지 입력 가능합니다.'),
+  name: yup.string().required('이름은 필수입니다.').min(2, '이름을 최소 2자 이상 입력하세요.').max(30, '이름은 최대 30자리까지 입력 가능합니다.'),
   email: yup.string().email('유효한 이메일을 입력하세요.').required('이메일은 필수입니다.'),
   password: yup.string().required('비밀번호는 필수입니다.'),
   confirmPassword: yup.string().oneOf([yup.ref('password')], '비밀번호가 일치하지 않습니다.').required('비밀번호 확인은 필수입니다.')
@@ -86,7 +86,7 @@ type TSignUpFormData = yup.InferType<typeof signUpSchema>
 const { handleSubmit, defineField } = useForm<TSignUpFormData>({
   validationSchema: signUpSchema
 })
-const [username, usernameProps] = defineField('username')
+const [name, nameProps] = defineField('name')
 const [email, emailProps] = defineField('email')
 const [password, passwordProps] = defineField('password')
 const [confirmPassword, confirmPasswordProps] = defineField('confirmPassword')
@@ -98,7 +98,7 @@ const onSubmit = handleSubmit(async (values) => {
       await axios.post('/api/auth/sign-up', values)
       await router.push(`/sign-in?id=${values.email}`)
     } catch (e: any) {
-      alert(e.response.data)
+      alert(e.response.data || '회원가입에 실패했습니다.')
       throw e
     }
   },
