@@ -15,6 +15,7 @@ const handleClose = computed(() => store.getters.handleModalClose)
 
 const handleConfirm = computed(() => store.getters.handleModalConfirm)
 
+
 </script>
 
 <template>

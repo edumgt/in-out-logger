@@ -68,10 +68,12 @@
 <script setup lang="ts">
 import * as yup from 'yup'
 import { useForm } from 'vee-validate'
-import axios from 'axios'
+import axios, { isAxiosError } from 'axios'
 import { useRouter } from 'vue-router'
 import { h } from 'vue'
 import { useStore } from 'vuex'
+import { messageHandler } from '@/utils/error.ts'
+import { modalTypes } from '../stores/vuex/modules/modal'
 
 const signUpSchema = yup.object({
   name: yup.string().required('이름은 필수입니다.').min(2, '이름을 최소 2자 이상 입력하세요.').max(30, '이름은 최대 30자리까지 입력 가능합니다.'),
@@ -101,10 +103,13 @@ const onSubmit = handleSubmit(async (values) => {
       await axios.post('/api/auth/sign-up', values)
       await router.push(`/sign-in?id=${values.email}`)
     } catch (e: any) {
-      store.commit('setModal', {
-        isOpen: true,
-        content: h('p', e.response.data || '회원가입에 실패했습니다.')
-      })
+      if(isAxiosError(e)){
+        store.commit('setModal', {
+          isOpen: true,
+          content: h('p', messageHandler(e, '회원가입에 실패했습니다.')),
+          modalType: 'alert'
+        })
+      }
       throw e
     }
   },

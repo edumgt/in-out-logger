@@ -48,8 +48,8 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       placeholder,
       inputValue
     }: ModalModuleState) {
-      state.isOpen = isOpen ?? state.isOpen
       state.content = content ?? state.content
+      state.isOpen = isOpen ?? state.isOpen
       state.onClose = onClose ?? state.onClose
       state.onConfirm = onConfirm ?? state.onConfirm
       state.modalType = modalType ?? 'alert'

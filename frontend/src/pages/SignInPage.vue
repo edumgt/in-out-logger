@@ -6,6 +6,8 @@ import axios from '@/utils/axios.ts'
 import { useStore } from 'vuex'
 import { ModalModuleState } from '@/stores/vuex/modules/modal.ts'
 import { useProgress } from '@/utils/proxy.ts'
+import { isAxiosError } from 'axios'
+import { messageHandler } from '@/utils/error.ts'
 
 const store = useStore()
 const route = useRoute()
@@ -25,9 +27,10 @@ const handleSubmit = async () => {
     const { data } = response
     let token = response.headers.authorization
     if (!token.startsWith('Bearer')) {
-      store.commit<ModalModuleState>({
+      store.commit('setModal',{
         isOpen: true,
-        content: () => h('p', '로그인에 실패했습니다.')
+        content: () => h('p', '로그인에 실패했습니다.'),
+        modalType: 'alert'
       })
       return
     }
@@ -35,11 +38,14 @@ const handleSubmit = async () => {
     store.commit('setToken', token)
     store.commit('setUsername', data.username)
     await router.push('/')
-  } catch (e: any) {
-    store.commit('setModal', {
-      isOpen: true,
-      content: () => h('p', e.response.data || '로그인에 실패했습니다.')
-    })
+  } catch (e: any){
+    if(isAxiosError(e)){
+      store.commit('setModal', {
+        isOpen: true,
+        content: () => h('p', messageHandler(e, '로그인에 실패했습니다.')),
+        modalType: 'alert'
+      })
+    }
     throw e
   }
 }
