@@ -60,7 +60,7 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
         return
       }
       const response = await axios.post('/api/calendar/events', {
-        title: inputValue,
+        title: `${inputValue} (${username.value})`,
         start: selectInfo.startStr,
         end: selectInfo.endStr,
         backgroundColor: selectBoxValue.value
@@ -72,7 +72,7 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
         start,
         end,
         allDay: true,
-        backgroundColor: selectBoxValue.value
+        backgroundColor: selectBoxValue.value,
       })
     }
   })
@@ -134,11 +134,6 @@ const calendarOptions = ref<CalendarOptions>({
     right: 'next nextYear'
   },
   locale: 'kr',
-
-  // titleFormat(arg) {
-  //   console.log('arg',arg)
-  //   return arg.
-  // },
   initialView: 'dayGridMonth',
   initialDate: new Date(),
   editable: true,
@@ -222,7 +217,7 @@ const handleCheckIn = async () => {
   } catch (e: any) {
     store.commit('setModal', {
       isOpen: true,
-      content: h('p', e.response.data),
+      content: h('p', messageHandler(e)),
       modalType: 'alert'
     })
     throw e
@@ -238,7 +233,7 @@ const handleCheckOut = async () => {
   } catch (e: any) {
     store.commit('setModal', {
       isOpen: true,
-      content: h('p', e.response.data)
+      content: h('p', messageHandler(e))
     })
     throw e
   }
@@ -247,6 +242,7 @@ const checkInProgress = useProgress(handleCheckIn)
 const checkOutProgress = useProgress(handleCheckOut)
 
 const store = useStore()
+const username = computed(() => store.getters.getUsername)
 
 const handleNavigateCalendar = (eventStartDate: string) => {
   calendarApi.value.gotoDate(eventStartDate)
@@ -280,7 +276,12 @@ const handleNavigateCalendar = (eventStartDate: string) => {
             </div>
           </li>
           <li>
-            <div @click="" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <div @click="() => {
+              store.commit('setModal',{
+                isOpen: true,
+                content: h('p','개발중입니다.')
+              })
+            }" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z"/></svg>
               <span class="flex-1 ms-3 whitespace-nowrap">출근부</span> <!-- TODO 출근부 -->
             </div>
