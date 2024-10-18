@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -31,7 +30,9 @@ public class CalendarService {
         calendarEventRepository.deleteById(eventId);
     }
 
-    public List<CalendarEventDto> getAllEvents() {
-        return calendarEventRepository.findAll().stream().map(calendarMapper::toDto).toList();
+    public List<CalendarEventDto> getEventsByYear(int eventYear) {
+        LocalDate startDate = LocalDate.of(eventYear, 1, 1);
+        LocalDate endDate = LocalDate.of(eventYear, 12, 31);
+        return calendarEventRepository.findAllByStartBetween(startDate, endDate).stream().map(calendarMapper::toDto).toList();
     }
 }

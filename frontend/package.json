@@ -18,6 +18,7 @@
     "@vueuse/integrations": "^11.1.0",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
+    "flowbite": "^2.5.2",
     "nprogress": "^0.2.0",
     "pinia": "^2.2.4",
     "pinia-plugin-persistedstate": "^4.1.1",

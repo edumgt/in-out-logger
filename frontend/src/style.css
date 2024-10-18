@@ -1,7 +1,8 @@
+@import 'flowbite';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 html,
 body,
 #app {
@@ -87,3 +88,4 @@ body,
     padding: 20px;
     box-sizing: border-box;
 }
+

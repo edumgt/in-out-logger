@@ -15,9 +15,9 @@ public class CalendarEventController {
 
     private final CalendarService calendarService;
 
-    @GetMapping
-    public ResponseEntity<?> getAllEvents(){
-         List<CalendarEventDto> result = calendarService.getAllEvents();
+    @GetMapping("/{eventYear}")
+    public ResponseEntity<?> getAllEvents(@PathVariable int eventYear){
+         List<CalendarEventDto> result = calendarService.getEventsByYear(eventYear);
          return ResponseEntity.status(200).body(result);
     }
     @PostMapping

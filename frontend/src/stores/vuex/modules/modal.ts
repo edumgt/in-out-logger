@@ -14,7 +14,7 @@ export interface ModalModuleState {
   selectBoxValue: SelectOption
 }
 
-export type ElementType<T> = T extends (infer U)[] ? U : never
+
 
 export const selectOptions = ['black', 'red', 'green', 'blue'] as const
 export type SelectOption = ElementType<typeof selectOptions>
@@ -22,7 +22,7 @@ export type InputValue = string
 export type OnConfirm = (() => void) | ((inputValue: InputValue) => void) | null
 export type OnClose = (() => void) | null
 
-export const modalTypes = ['alert','input']
+export const modalTypes = ['alert','input'] as const
 
 export type ModalType = ElementType<typeof modalTypes>
 
@@ -93,7 +93,7 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
         state.isOpen = false
         if (state.modalType === 'input') {
           state.onConfirm?.(state.inputValue)
-        } else {
+        } else if(state.modalType === 'alert'){
           state.onConfirm?.()
         }
       }

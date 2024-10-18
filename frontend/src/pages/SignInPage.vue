@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import axios from '@/utils/axios.ts'
 import { useStore } from 'vuex'
 import { ModalModuleState } from '@/stores/vuex/modules/modal.ts'
-import { useProgress } from '@/utils/proxy.ts'
+import { useProgress } from '@/utils/etc.ts'
 import { isAxiosError } from 'axios'
 import { messageHandler } from '@/utils/error.ts'
 

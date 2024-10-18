@@ -3,7 +3,7 @@ import { ref, computed, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/utils/axios'
 import { useStore } from 'vuex'
-import { useProgress } from '@/utils/proxy.ts'
+import { useProgress } from '@/utils/etc.ts'
 
 const route = useRoute()
 const router = useRouter()
@@ -45,7 +45,7 @@ const checkAuthProgress = useProgress(checkAuth)
 <template>
   <div class="min-h-screen bg-gray-100 flex items-center justify-center">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-      <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">인증 관리</h1>
+      <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">In Out Logger</h1>
 
       <div class="space-y-4">
         <router-link to="/sign-up" class="block w-full btn cyan small">회원가입</router-link>
