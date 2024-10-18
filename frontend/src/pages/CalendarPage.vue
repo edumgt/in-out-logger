@@ -9,7 +9,9 @@ import { useProgress } from '@/utils/proxy.ts'
 import { useStore } from 'vuex'
 import { InputValue } from '@/stores/vuex/modules/modal.ts'
 import { DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
+import { dateToNumber } from '@/utils/string.ts'
 
+type Direction = 'asc' | 'desc'
 
 const calendarRef = ref<InstanceType<typeof FullCalendar>>()
 const calendarApi = computed(() => (calendarRef.value as InstanceType<typeof FullCalendar>).getApi())
@@ -67,9 +69,27 @@ const handleEventClick = (clickInfo: EventClickArg) => {
     }
   })
 }
+
+const direction = ref<Direction>('asc')
+
+const handleClickCheckbox = () => {
+  const opposite: Direction = direction.value === 'asc' ? 'desc' : 'asc'
+  direction.value = opposite
+  sortEvents()
+}
+
+const sortEvents = () => {
+  if (direction.value === 'asc') {
+    currentEvents.value.sort((a, b) => dateToNumber(a.startStr) - dateToNumber(b.startStr))
+  } else {
+    currentEvents.value.sort((a, b) => dateToNumber(b.startStr) - dateToNumber(a.startStr))
+  }
+}
+
 const handleEvents = (events: EventApi[]) => {
   currentEvents.value = events
-  console.log('set', currentEvents.value)
+  sortEvents()
+  console.log('set', events[0]?.startStr)
 }
 
 const calendarOptions = ref<object>({
@@ -157,13 +177,20 @@ const handleNavigateCalendar = (eventStartDate: string) => {
       <div class='sidebar-section flex flex-col gap-2'>
         <button class="btn green small" @click="checkInProgress">출근</button>
         <button class="btn purple small" @click="checkOutProgress">퇴근</button>
+        <button class="btn cyan block mini" @click="">출근부 보기</button>
       </div>
       <div class='sidebar-section'>
         <label> <input type='checkbox' :checked='calendarOptions.weekends' @change='handleWeekendsToggle' /> toggle
           weekends </label>
       </div>
       <div class='sidebar-section'>
-        <h2>All Events ({{ currentEvents.length }})</h2>
+        <div class="flex gap-2">
+          <h2>All Events ({{ currentEvents.length }})</h2>
+          <div class="mt-1 flex gap-1">
+            <input @change="handleClickCheckbox" :checked="direction === 'asc'" id="direction" type="checkbox" />
+            <label for="direction">오름차순</label>
+          </div>
+        </div>
         <ul>
           <li v-for='event in currentEvents' :key='event.id'>
             <div class="cursor-pointer" @click="() => handleNavigateCalendar(event.startStr)">

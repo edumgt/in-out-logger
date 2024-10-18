@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useStore } from 'vuex'
-import { computed } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 const store = useStore()
 const isModalOpen = computed(() => store.getters.isInputModalOpen)
@@ -8,10 +8,19 @@ const handleClose = computed(() => store.getters.handleModalClose)
 const handleConfirm = computed(() => store.getters.handleModalConfirm)
 const inputValue = computed(() => store.getters.getInputValue)
 
-const updateInputState = (e) => {
+const updateInputState = (e: any) => {
   // 단방향 바인딩하고 react처럼 state 변경하는 식으로 처리
-  store.commit('setInputValue', e.target.value)
+  store.commit('setInputValue', e.target.value);
 }
+
+const inputRef = ref()
+
+watch([isModalOpen],async () => {
+  if(isModalOpen.value && inputRef.value) {
+    await nextTick()
+    inputRef.value.focus()
+  }
+})
 
 </script>
 
@@ -21,8 +30,10 @@ const updateInputState = (e) => {
       <div v-show="isModalOpen" class="mt-4">
         <component :is="store.getters.getContent" class="text-lg mb-4"></component>
         <input
+          ref="inputRef"
           :value="inputValue"
           @input="updateInputState"
+          @keyup.enter="handleConfirm"
           type="text"
           class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500 mb-4"
           :placeholder="store.getters.getPlaceholder"
