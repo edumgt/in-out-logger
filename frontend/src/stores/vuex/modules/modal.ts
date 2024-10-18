@@ -10,19 +10,21 @@ export interface ModalModuleState {
   onConfirm: OnConfirm
   placeholder: string
   inputValue: InputValue
-  modalType: ModalTypes
+  modalType: ModalType
+  selectBoxValue: SelectOption
 }
 
+export type ElementType<T> = T extends (infer U)[] ? U : never
+
+export const selectOptions = ['black', 'red', 'green', 'blue'] as const
+export type SelectOption = ElementType<typeof selectOptions>
 export type InputValue = string
 export type OnConfirm = (() => void) | ((inputValue: InputValue) => void) | null
 export type OnClose = (() => void) | null
 
-export const modalTypes = {
-  alert: '알림',
-  input: '입력'
-} as const
+export const modalTypes = ['alert','input']
 
-export type ModalTypes = keyof typeof modalTypes;
+export type ModalType = ElementType<typeof modalTypes>
 
 
 const modalModule: Module<ModalModuleState, VuexModules> = {
@@ -34,7 +36,8 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       onConfirm: null,
       inputValue: '',
       placeholder: '',
-      modalType: 'alert'
+      modalType: 'alert',
+      selectBoxValue: 'black'
     }
   },
   actions: {},
@@ -58,6 +61,9 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
     },
     setInputValue(state, payload) {
       state.inputValue = payload
+    },
+    setSelectBoxValue(state, payload) {
+      state.selectBoxValue = payload
     }
   },
   getters: {
@@ -91,6 +97,9 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
           state.onConfirm?.()
         }
       }
+    },
+    getSelectBoxValue(state) {
+      return state.selectBoxValue
     }
   }
 }

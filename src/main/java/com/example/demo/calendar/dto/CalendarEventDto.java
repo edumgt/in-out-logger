@@ -13,4 +13,5 @@ public class CalendarEventDto extends CommonDto {
     private String title;
     private LocalDate start;
     private LocalDate end;
+    private String backgroundColor;
 }

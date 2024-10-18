@@ -26,4 +26,6 @@ public class CalendarEvent extends CommonProperties {
     private LocalDate start;
     @Column
     private LocalDate end;
+    @Column(columnDefinition = "VARCHAR(30)")
+    private String backgroundColor;
 }

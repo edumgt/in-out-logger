@@ -7,7 +7,7 @@ import { computed, h, nextTick, onMounted, ref } from 'vue'
 import axios from '@/utils/axios.ts'
 import { useProgress } from '@/utils/proxy.ts'
 import { useStore } from 'vuex'
-import { InputValue } from '@/stores/vuex/modules/modal.ts'
+import { InputValue, selectOptions, SelectOption } from '@/stores/vuex/modules/modal.ts'
 import { DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
 import { dateToNumber } from '@/utils/string.ts'
 
@@ -21,13 +21,27 @@ const currentEvents = ref<EventApi[]>([])
 const handleWeekendsToggle = () => {
   calendarOptions.value.weekends = !calendarOptions.value.weekends // update a property
 }
-
+const selectBoxValue = computed(() => store.getters.getSelectBoxValue)
 
 const handleDateSelect = (selectInfo: DateSelectArg) => {
   store.commit('setModal', {
     isOpen: true,
     modalType: 'input',
-    content: h('p', '일정명을 입력해주세요.'),
+    content: h('div', { 'class': 'flex justify-between' }, [
+      h('p', '일정명을 입력해주세요.'),
+      h('div', { 'class': `flex gap-1` }, [
+        h('p', '배경색 지정'),
+        h('select', {
+            onChange(event: any) {
+              store.commit('setSelectBoxValue', event.target.value)
+            }
+          },
+          selectOptions.map((option: SelectOption) =>
+            h('option', { value: option }, option)
+          )
+        )
+      ])
+    ]),
     placeholder: '일정명',
     options: {
       propagation: true
@@ -42,7 +56,8 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
       const response = await axios.post('/api/calendar/events', {
         title: inputValue,
         start: selectInfo.startStr,
-        end: selectInfo.endStr
+        end: selectInfo.endStr,
+        backgroundColor: selectBoxValue.value
       })
       const { id, start, end, title } = response.data
       calendarApi.addEvent({
@@ -50,7 +65,8 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
         title,
         start,
         end,
-        allDay: true
+        allDay: true,
+        backgroundColor: selectBoxValue.value
       })
     }
   })
@@ -91,7 +107,6 @@ const handleEvents = (events: EventApi[]) => {
   sortEvents()
   console.log('set', events[0]?.startStr)
 }
-
 const calendarOptions = ref<object>({
   plugins: [
     dayGridPlugin,
@@ -127,13 +142,14 @@ const fetchInitialEvents = async () => {
 onMounted(async () => {
   await nextTick()
   const events = await fetchInitialEvents()
-  for (const { id, title, start, end } of events) {
+  for (const { id, title, start, end, backgroundColor } of events) {
     calendarApi.value.addEvent({
       id,
       title,
       start,
       end,
-      allDay: true
+      allDay: true,
+      backgroundColor
     })
   }
 })
@@ -144,7 +160,8 @@ const handleCheckIn = async () => {
   } catch (e: any) {
     store.commit('setModal', {
       isOpen: true,
-      content: h('p', e.response.data)
+      content: h('p', e.response.data),
+      modalType: 'alert'
     })
     throw e
   }
