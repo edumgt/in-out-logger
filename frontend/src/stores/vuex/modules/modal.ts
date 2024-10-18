@@ -16,7 +16,7 @@ export interface ModalModuleState {
 
 
 
-export const selectOptions = ['black', 'red', 'green', 'blue'] as const
+export const selectOptions = ['forest', 'red', 'black', 'skyblue','orange','purple'] as const
 export type SelectOption = ElementType<typeof selectOptions>
 export type InputValue = string
 export type OnConfirm = (() => void) | ((inputValue: InputValue) => void) | null
@@ -36,8 +36,8 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       onConfirm: null,
       inputValue: '',
       placeholder: '',
-      modalType: 'alert',
-      selectBoxValue: 'black'
+      modalType: 'alert', // default
+      selectBoxValue: 'green'
     }
   },
   actions: {},
@@ -49,15 +49,17 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       onConfirm,
       modalType,
       placeholder,
-      inputValue
+      inputValue,
+      selectBoxValue
     }: ModalModuleState) {
-      state.content = content ?? state.content
-      state.isOpen = isOpen ?? state.isOpen
-      state.onClose = onClose ?? state.onClose
-      state.onConfirm = onConfirm ?? state.onConfirm
+      state.content = content ?? null
+      state.isOpen = isOpen ?? false
+      state.onClose = onClose ?? null
+      state.onConfirm = onConfirm ?? null
       state.modalType = modalType ?? 'alert'
       state.placeholder = placeholder ?? ''
       state.inputValue = inputValue ?? ''
+      state.selectBoxValue = selectBoxValue ?? 'green'
     },
     setInputValue(state, payload) {
       state.inputValue = payload

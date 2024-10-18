@@ -27,28 +27,25 @@ public class CommuteService {
         return commuteDtos;
     }
 
-    public Commute checkIn() {
+    public void checkIn() {
         Employee employee = SecurityUtils.getCurrentUser();
         boolean isCheckedIn = commuteRepository.findByCreatedByAndDate(employee, LocalDate.now()).isPresent();
         if(isCheckedIn){
-            throw new HttpException(HttpStatus.BAD_REQUEST, "이미 출근처리 되었습니다.");
+            throw new HttpException(HttpStatus.BAD_REQUEST, "이미 출근 처리 되었습니다.");
         }
         Commute commute = Commute.builder()
                 .date(LocalDate.now())
                 .checkInTime(LocalTime.now())
                 .build();
-        commute = commuteRepository.save(commute);
-        return commute;
+        commuteRepository.save(commute);
     }
-    public Commute checkOut() {
+    public String checkOut() {
         Employee employee = SecurityUtils.getCurrentUser();
         Commute commute = commuteRepository.findByCreatedByAndDate(employee, LocalDate.now())
                 .orElseThrow(() -> new HttpException(HttpStatus.BAD_REQUEST, "오늘 출근하지 않았습니다."));
-        if(commute.getCheckOutTime() != null){
-            throw new HttpException(HttpStatus.BAD_REQUEST, "이미 퇴근처리 되었습니다.");
-        }
+        boolean checkOutLogExists = commute.getCheckOutTime() != null;
         commute.setCheckOutTime(LocalTime.now());
-        commute = commuteRepository.save(commute);
-        return commute;
+        commuteRepository.save(commute);
+        return checkOutLogExists ? "퇴근 처리 갱신되었습니다." : "퇴근 처리 되었습니다.";
     }
 }

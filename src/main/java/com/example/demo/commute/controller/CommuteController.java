@@ -28,8 +28,8 @@ public class CommuteController {
 
     @PatchMapping
     public ResponseEntity<?> checkOut() {
-        commuteService.checkOut();
-        return ResponseEntity.status(204).build();
+        String message = commuteService.checkOut();
+        return ResponseEntity.status(200).body(message);
     }
 
 }

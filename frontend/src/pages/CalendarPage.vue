@@ -5,11 +5,13 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { computed, h, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import axios from '@/utils/axios.ts'
-import { sleep, useProgress } from '@/utils/etc.ts'
+import { useProgress } from '@/utils/etc.ts'
 import { useStore } from 'vuex'
 import { InputValue, SelectOption, selectOptions } from '@/stores/vuex/modules/modal.ts'
 import { CalendarOptions, DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
 import { dateToNumber } from '@/utils/string.ts'
+import { isAxiosError } from 'axios'
+import { messageHandler } from '@/utils/error.ts'
 
 type Direction = 'asc' | 'desc'
 
@@ -34,7 +36,7 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
     content: h('div', { 'class': 'flex justify-between' }, [
       h('p', '일정명을 입력해주세요.'),
       h('div', { 'class': `flex gap-1` }, [
-        h('p', '배경색 지정'),
+        h('p', {'class': 'mt-2 mr-1'},'배경색 지정'),
         h('select', {
             onChange(event: any) {
               store.commit('setSelectBoxValue', event.target.value)
@@ -83,9 +85,17 @@ const handleEventClick = (clickInfo: EventClickArg) => {
     modalType: 'alert',
     content: h('p', '일정을 삭제할까요?'),
     onConfirm: async () => {
-      const response = await axios.delete(`/api/calendar/events/${clickInfo.event.id}`)
-      console.log(response)
-      clickInfo.event.remove()
+      try {
+        await axios.delete(`/api/calendar/events/${clickInfo.event.id}`)
+        clickInfo.event.remove()
+      } catch(e:any){
+        if(isAxiosError(e)){
+          store.commit('setModal', {
+            isOpen: true,
+            content: h('p', messageHandler(e)),
+          })
+        }
+      }
     }
   })
 }
@@ -107,7 +117,7 @@ const sortEvents = () => {
 }
 
 
-const handleEvents = async (events: EventApi[]) => {
+const handleEvents = (events: EventApi[]) => {
   currentEvents.value = events
   sortEvents()
   console.log('set', events[0]?.startStr)
@@ -220,7 +230,11 @@ const handleCheckIn = async () => {
 }
 const handleCheckOut = async () => {
   try {
-    await axios.patch('/api/commutes')
+    const response = await axios.patch('/api/commutes')
+    store.commit('setModal', {
+      isOpen: true,
+      content: h('p', response.data),
+    })
   } catch (e: any) {
     store.commit('setModal', {
       isOpen: true,
@@ -255,20 +269,20 @@ const handleNavigateCalendar = (eventStartDate: string) => {
           </li>
           <li>
             <div @click="checkInProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-              <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 16">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 8h11m0 0L8 4m4 4-4 4m4-11h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3" />
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="currentColor"><path d="M14 19a1 1 0 1 0 0 2h5a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-5a1 1 0 1 0 0 2h5v14z"/><path d="M15.714 12.7a1 1 0 0 0 .286-.697v-.006a1 1 0 0 0-.293-.704l-4-4a1 1 0 1 0-1.414 1.414L12.586 11H3a1 1 0 1 0 0 2h9.586l-2.293 2.293a1 1 0 1 0 1.414 1.414l4-4z"/></g></svg>
               <span class="flex-1 ms-3 whitespace-nowrap">출근</span>
             </div>
           </li>
           <li>
             <div @click="checkOutProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-              <svg class="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.96 2.96 0 0 0 .13 5H5Z" />
-                <path d="M6.737 11.061a2.961 2.961 0 0 1 .81-1.515l6.117-6.116A4.839 4.839 0 0 1 16 2.141V2a1.97 1.97 0 0 0-1.933-2H7v5a2 2 0 0 1-2 2H0v11a1.969 1.969 0 0 0 1.933 2h12.134A1.97 1.97 0 0 0 16 18v-3.093l-1.546 1.546c-.413.413-.94.695-1.513.81l-3.4.679a2.947 2.947 0 0 1-1.85-.227 2.96 2.96 0 0 1-1.635-3.257l.681-3.397Z" />
-                <path d="M8.961 16a.93.93 0 0 0 .189-.019l3.4-.679a.961.961 0 0 0 .49-.263l6.118-6.117a2.884 2.884 0 0 0-4.079-4.078l-6.117 6.117a.96.96 0 0 0-.263.491l-.679 3.4A.961.961 0 0 0 8.961 16Zm7.477-9.8a.958.958 0 0 1 .68-.281.961.961 0 0 1 .682 1.644l-.315.315-1.36-1.36.313-.318Zm-5.911 5.911 4.236-4.236 1.359 1.359-4.236 4.237-1.7.339.341-1.699Z" />
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="currentColor"><path fill-rule="evenodd" d="M11 20a1 1 0 0 0-1-1H5V5h5a1 1 0 1 0 0-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5a1 1 0 0 0 1-1" clip-rule="evenodd"/><path d="M21.714 12.7a1 1 0 0 0 .286-.697v-.006a1 1 0 0 0-.293-.704l-4-4a1 1 0 1 0-1.414 1.414L18.586 11H9a1 1 0 1 0 0 2h9.586l-2.293 2.293a1 1 0 0 0 1.414 1.414l4-4z"/></g></svg>
               <span class="flex-1 ms-3 whitespace-nowrap">퇴근</span>
+            </div>
+          </li>
+          <li>
+            <div @click="" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z"/></svg>
+              <span class="flex-1 ms-3 whitespace-nowrap">출근부</span> <!-- TODO 출근부 -->
             </div>
           </li>
           <li class='sidebar-section'>
