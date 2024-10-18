@@ -145,14 +145,18 @@ const checkOutProgress = useProgress(handleCheckOut)
 
 const store = useStore()
 
+const handleNavigateCalendar = (eventStartDate: string) => {
+  calendarApi.value.gotoDate(eventStartDate)
+}
+
 </script>
 
 <template>
   <div class='main-wrap'>
     <div class='sidebar'>
       <div class='sidebar-section flex flex-col gap-2'>
-        <button @click="checkInProgress">출근</button>
-        <button @click="checkOutProgress">퇴근</button>
+        <button class="btn green small" @click="checkInProgress">출근</button>
+        <button class="btn purple small" @click="checkOutProgress">퇴근</button>
       </div>
       <div class='sidebar-section'>
         <label> <input type='checkbox' :checked='calendarOptions.weekends' @change='handleWeekendsToggle' /> toggle
@@ -162,7 +166,9 @@ const store = useStore()
         <h2>All Events ({{ currentEvents.length }})</h2>
         <ul>
           <li v-for='event in currentEvents' :key='event.id'>
-            <b>{{ event.startStr }}</b> <i>{{ event.title }}</i>
+            <div class="cursor-pointer" @click="() => handleNavigateCalendar(event.startStr)">
+              <b>{{ event.startStr }}</b> <i>{{ event.title }}</i>
+            </div>
           </li>
         </ul>
       </div>
@@ -178,7 +184,6 @@ const store = useStore()
 </template>
 
 <style lang='css'>
-
 h2 {
   margin: 0;
   font-size: 16px;

@@ -32,6 +32,8 @@ const checkAuth = async () => {
   }
 }
 
+const username = computed(() => store.getters.getUsername)
+
 const logout = () => {
   store.commit('setUsername', '')
   store.commit('setToken', '')
@@ -46,30 +48,27 @@ const checkAuthProgress = useProgress(checkAuth)
       <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">인증 관리</h1>
 
       <div class="space-y-4">
-        <router-link v-for="(link, index) in [
-            { to: '/sign-up', text: '회원가입' },
-            { to: '/sign-in', text: '로그인' }
-          ]" :key="index" :to="link.to" class="block w-full text-center py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200">
-          {{ link.text }}
-        </router-link>
+        <router-link to="/sign-up" class="block w-full btn cyan small">회원가입</router-link>
+        <router-link to="/calendar" class="block w-full btn blue small">캘린더</router-link>
 
-        <router-link to="/calendar" class="block w-full text-center py-2 px-4 bg-yellow-500 text-black rounded hover:bg-yellow-600 transition duration-200">캘린더</router-link>
-
-        <button @click="checkAuthProgress" class="w-full py-2 px-4 bg-green-500 text-white rounded hover:bg-green-600 transition duration-200" :disabled="isLoading">
-          {{ isLoading ? '확인 중...' : '로그인 체크' }}
+        <button @click="checkAuthProgress" class="block w-full btn yellow small" :disabled="isLoading">
+          {{ isLoading ? '확인 중...' : '인증' }}
         </button>
 
         <p v-if="authStatus" class="text-center text-sm" :class="{'text-green-600': authStatus.includes('성공'), 'text-red-600': authStatus.includes('실패')}">
           {{ authStatus }} </p>
-      </div>
-
-      <div v-if="isLoggedIn" class="mt-6">
-        <p class="text-center text-lg font-semibold text-gray-800 mb-4">
-          {{ store.getters.getUsername }}님 안녕하세요! </p>
-        <button @click="logout" class="w-full py-2 px-4 bg-red-500 text-white rounded hover:bg-red-600 transition duration-200">
+        <div v-if="isLoggedIn" class="mt-6">
+          <p class="text-center text-lg font-semibold text-gray-800 mb-4">
+            {{ username }}님 안녕하세요! </p>
+        </div>
+        <button v-if="!!username" @click="logout" class="block w-full btn red small">
           로그아웃
         </button>
+        <router-link v-else to="/sign-in" class="block w-full btn green small">로그인</router-link>
       </div>
+
+
+
     </div>
   </div>
 </template>
