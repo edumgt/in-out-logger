@@ -31,5 +31,10 @@ public class CommuteController {
         String message = commuteService.checkOut();
         return ResponseEntity.status(200).body(message);
     }
+    @GetMapping("/each-day")
+    public ResponseEntity<?> getCommutesGroupedByDay() {
+        commuteService.getCommutesGroupedByDay();
+        return ResponseEntity.status(200).build();
+    }
 
 }

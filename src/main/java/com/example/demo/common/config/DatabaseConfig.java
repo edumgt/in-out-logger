@@ -3,12 +3,15 @@ package com.example.demo.common.config;
 import com.example.demo.employee.model.PrincipalDetails;
 import com.example.demo.employee.entity.Employee;
 import com.example.demo.common.model.SecretConfig;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.*;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -23,6 +26,12 @@ import java.util.Optional;
 @EnableJpaAuditing
 @RequiredArgsConstructor
 public class DatabaseConfig {
+//    @PersistenceContext
+//    private EntityManager entityManager;
+    @Bean
+    public JPAQueryFactory jpaQueryFactory(EntityManager entityManager){
+        return new JPAQueryFactory(entityManager);
+    }
     @Bean
     @DependsOn("secretConfig")
     public DataSource dataSource(SecretConfig secretConfig) {
@@ -50,4 +59,7 @@ public class DatabaseConfig {
             return Optional.empty();
         };
     }
+
+
+
 }

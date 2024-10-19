@@ -7,6 +7,8 @@ import com.example.demo.commute.entity.Commute;
 import com.example.demo.commute.mapper.CommuteMapper;
 import com.example.demo.commute.repository.CommuteRepository;
 import com.example.demo.employee.entity.Employee;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,8 @@ import java.util.List;
 public class CommuteService {
     private final CommuteRepository commuteRepository;
     private final CommuteMapper commuteMapper;
+
+
 
     public List<CommuteDto> getAllCommutes() {
         List<Commute> commutes = commuteRepository.findAll();
@@ -47,5 +51,9 @@ public class CommuteService {
         commute.setCheckOutTime(LocalTime.now());
         commuteRepository.save(commute);
         return checkOutLogExists ? "퇴근 처리 갱신되었습니다." : "퇴근 처리 되었습니다.";
+    }
+
+    public void getCommutesGroupedByDay() {
+
     }
 }
