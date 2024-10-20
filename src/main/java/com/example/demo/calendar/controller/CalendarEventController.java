@@ -4,6 +4,7 @@ import com.example.demo.calendar.dto.CalendarEventDto;
 import com.example.demo.calendar.service.CalendarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class CalendarEventController {
          return ResponseEntity.status(200).body(result);
     }
     @PostMapping
+    @Secured("ROLE_INTERN")
     public ResponseEntity<?> createEvent(@RequestBody CalendarEventDto calendarEventDto){
          CalendarEventDto result = calendarService.createEvent(calendarEventDto);
          return ResponseEntity.status(201).body(result);

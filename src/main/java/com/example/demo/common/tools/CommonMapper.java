@@ -11,10 +11,16 @@ public interface CommonMapper {
 
     @Named("createdByToId")
     default Long createdByToId(Employee createdBy){
+        if(createdBy == null){
+            return null;
+        }
         return createdBy.getId();
     }
     @Named("updatedByToId")
     default Long updatedByToId(Employee updatedBy){
+        if(updatedBy == null){
+            return null;
+        }
         return updatedBy.getId();
     }
 }

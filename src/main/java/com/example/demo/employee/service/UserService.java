@@ -51,7 +51,7 @@ public class UserService {
             Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
             String clientIp = HttpUtils.getClientIp();
             TokenDto tokenDto =  jwtService.generateToken(authentication);
-            redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
+//            redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
             return tokenDto;
         } catch (BadCredentialsException e){
             throw new HttpException(HttpStatus.BAD_REQUEST, "유효하지 않은 비밀번호입니다.");
