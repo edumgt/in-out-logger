@@ -1,4 +1,4 @@
-interface Token {
+interface Authentication {
   accessToken: string;
   refreshToken: string;
   grantType: string;

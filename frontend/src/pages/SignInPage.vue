@@ -4,7 +4,6 @@ import { h, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/utils/axios.ts'
 import { useStore } from 'vuex'
-import { ModalModuleState } from '@/stores/vuex/modules/modal.ts'
 import { useProgress } from '@/utils/etc.ts'
 import { isAxiosError } from 'axios'
 import { messageHandler } from '@/utils/error.ts'
@@ -23,14 +22,13 @@ const router = useRouter()
 
 const handleSubmit = async () => {
   try {
-    const response = await axios.post<Token>('/api/auth/sign-in', form)
+    const response = await axios.post<Authentication>('/api/auth/sign-in', form)
     const { data } = response
     let token = response.headers.authorization
     if (!token.startsWith('Bearer')) {
       store.commit('setModal',{
         isOpen: true,
         content: () => h('p', '로그인에 실패했습니다.'),
-        modalType: 'alert'
       })
       return
     }
@@ -43,7 +41,6 @@ const handleSubmit = async () => {
       store.commit('setModal', {
         isOpen: true,
         content: () => h('p', messageHandler(e, '로그인에 실패했습니다.')),
-        modalType: 'alert'
       })
     }
     throw e

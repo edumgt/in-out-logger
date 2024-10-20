@@ -82,7 +82,6 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
 const handleEventClick = (clickInfo: EventClickArg) => {
   store.commit('setModal', {
     isOpen: true,
-    modalType: 'alert',
     content: h('p', '일정을 삭제할까요?'),
     onConfirm: async () => {
       try {
@@ -157,7 +156,6 @@ const calendarOptions = ref<CalendarOptions>({
     if (currentYear < 2000) {
       store.commit('setModal', {
         isOpen: true,
-        modalType: 'alert',
         content: h('p', '2000년 이전 날짜는 조회 불가능합니다.'),
         onClose: () => calendarApi.value.gotoDate(new Date()),
         onConfirm: () => calendarApi.value.gotoDate(new Date())
@@ -218,7 +216,6 @@ const handleCheckIn = async () => {
     store.commit('setModal', {
       isOpen: true,
       content: h('p', messageHandler(e)),
-      modalType: 'alert'
     })
     throw e
   }
