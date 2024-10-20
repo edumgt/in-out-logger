@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("/api/commutes")
+@RequestMapping("/api/commute")
 @RestController
 @RequiredArgsConstructor
 public class CommuteController {
@@ -40,7 +40,7 @@ public class CommuteController {
     @GetMapping("/late-people")
     @MeasureTime
     public ResponseEntity<?> getLateEmployees() {
-        Object data = commuteService.getLateEmployees();
+        List<LateEmployeeResponseDto> data = commuteService.getLateEmployees();
         return ResponseEntity.status(200).body(data);
     }
 

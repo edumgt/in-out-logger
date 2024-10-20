@@ -46,7 +46,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     if (refreshTokenPair.getFirst()) { // 조회 완료 후 검사
                         TokenDto tokenDto = jwtService.reissueToken(accessTokenPair.getSecond()); // 액세스토큰 / 리프레시토큰 재발급
                         authService.setAuthentication(tokenDto.getAccessToken());
-                        redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
+//                        redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
                         response.setHeader(Token.AUTHORIZATION_HEADER, Token.GRANT_TYPE + " " + tokenDto.getAccessToken());
                     }
                 }

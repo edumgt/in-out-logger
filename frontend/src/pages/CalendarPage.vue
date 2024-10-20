@@ -3,15 +3,15 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import { computed, h, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import {computed, h, nextTick, onMounted, onUnmounted, ref} from 'vue'
 import axios from '@/utils/axios.ts'
-import { useProgress } from '@/utils/etc.ts'
-import { useStore } from 'vuex'
-import { InputValue, SelectOption, selectOptions } from '@/stores/vuex/modules/modal.ts'
-import { CalendarOptions, DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
-import { dateToNumber } from '@/utils/string.ts'
-import { isAxiosError } from 'axios'
-import { messageHandler } from '@/utils/error.ts'
+import {useProgress} from '@/utils/etc.ts'
+import {useStore} from 'vuex'
+import {InputValue, SelectOption, selectOptions} from '@/stores/vuex/modules/modal.ts'
+import {CalendarOptions, DateSelectArg, EventApi, EventClickArg} from '@fullcalendar/core'
+import {dateToNumber} from '@/utils/string.ts'
+import {isAxiosError} from 'axios'
+import {messageHandler} from '@/utils/error.ts'
 
 type Direction = 'asc' | 'desc'
 
@@ -33,17 +33,17 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
   store.commit('setModal', {
     isOpen: true,
     modalType: 'input',
-    content: h('div', { 'class': 'flex justify-between' }, [
+    content: h('div', {'class': 'flex justify-between'}, [
       h('p', '일정명을 입력해주세요.'),
-      h('div', { 'class': `flex gap-1` }, [
-        h('p', {'class': 'mt-2 mr-1'},'배경색 지정'),
+      h('div', {'class': `flex gap-1`}, [
+        h('p', {'class': 'mt-2 mr-1'}, '배경색 지정'),
         h('select', {
             onChange(event: any) {
               store.commit('setSelectBoxValue', event.target.value)
             }
           },
           selectOptions.map((option: SelectOption) =>
-            h('option', { value: option }, option)
+            h('option', {value: option}, option)
           )
         )
       ])
@@ -65,7 +65,7 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
         end: selectInfo.endStr,
         backgroundColor: selectBoxValue.value
       })
-      const { id, start, end, title } = response.data
+      const {id, start, end, title} = response.data
       calendarApi.addEvent({
         id,
         title,
@@ -88,8 +88,8 @@ const handleEventClick = (clickInfo: EventClickArg) => {
       try {
         await axios.delete(`/api/calendar/events/${clickInfo.event.id}`)
         clickInfo.event.remove()
-      } catch(e:any){
-        if(isAxiosError(e)){
+      } catch (e: any) {
+        if (isAxiosError(e)) {
           store.commit('setModal', {
             isOpen: true,
             content: h('p', messageHandler(e)),
@@ -146,7 +146,7 @@ const calendarOptions = ref<CalendarOptions>({
   eventsSet: handleEvents,
   async datesSet(arg) {
     store.commit('setIsLoading', true)
-    const { start, end } = arg
+    const {start, end} = arg
     const startTime = start.getTime()
     const endTime = end.getTime()
 
@@ -166,8 +166,8 @@ const calendarOptions = ref<CalendarOptions>({
       return
     }
     const events = await fetchEvents(currentYear)
-    if(events){
-      for (const { id, title, start, end, backgroundColor } of events) {
+    if (events) {
+      for (const {id, title, start, end, backgroundColor} of events) {
         calendarApi.value.addEvent({
           id,
           title,
@@ -187,7 +187,7 @@ const calendarOptions = ref<CalendarOptions>({
   */
 })
 const fetchEvents = async (year: number) => {
-  if(fetchedYears.value[year]){
+  if (fetchedYears.value[year]) {
     return
   }
   console.log('data fetching...')
@@ -213,7 +213,7 @@ onUnmounted(() => {
 
 const handleCheckIn = async () => {
   try {
-    await axios.post('/api/commutes')
+    await axios.post('/api/commute')
   } catch (e: any) {
     store.commit('setModal', {
       isOpen: true,
@@ -225,7 +225,7 @@ const handleCheckIn = async () => {
 }
 const handleCheckOut = async () => {
   try {
-    const response = await axios.patch('/api/commutes')
+    const response = await axios.patch('/api/commute')
     store.commit('setModal', {
       isOpen: true,
       content: h('p', response.data),
@@ -241,12 +241,41 @@ const handleCheckOut = async () => {
 const checkInProgress = useProgress(handleCheckIn)
 const checkOutProgress = useProgress(handleCheckOut)
 
+const viewCommute = async () => {
+  const tableHeaders = {
+    date: '날짜',
+    lateEmployeeName: '이름',
+    lateCount: '지각 횟수'
+  }
+  const data = await axios.get('/api/commute/late-people').then((res: any) => res.data)
+  store.commit('setModal', {
+    isOpen: true,
+    content: h('table', { class: 'min-w-full border-collapse border border-gray-200' }, [
+      // 테이블 헤더
+      h('thead', {}, [
+        h('tr', { class: 'bg-gray-200' }, Object.values(tableHeaders).map(header =>
+          h('th', { class: 'px-4 py-2 border border-gray-300 text-left text-gray-600 font-medium' }, header)
+        ))
+      ]),
+      // 테이블 바디
+      h('tbody', {}, data.map((row: any, index: number) =>
+        h('tr', { class: index % 2 === 0 ? 'bg-white' : 'bg-gray-50' }, Object.keys(tableHeaders).map(key =>
+          h('td', { class: 'px-4 py-2 border border-gray-300 text-gray-700' }, row[key])
+        ))
+      ))
+    ])
+  })
+  console.log(data)
+}
+
+
 const store = useStore()
 const username = computed(() => store.getters.getUsername)
 
 const handleNavigateCalendar = (eventStartDate: string) => {
   calendarApi.value.gotoDate(eventStartDate)
 }
+const viewCommuteProgress = useProgress(viewCommute)
 
 </script>
 
@@ -258,40 +287,62 @@ const handleNavigateCalendar = (eventStartDate: string) => {
           <li>
             <router-link to="/" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <path fill="currentColor" d="m12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81zM12 3L2 12h3v8h6v-6h2v6h6v-8h3z" />
+                <path fill="currentColor" d="m12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81zM12 3L2 12h3v8h6v-6h2v6h6v-8h3z"/>
               </svg>
               <span class="ms-3">메인으로</span>
             </router-link>
           </li>
           <li>
             <div @click="checkInProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="currentColor"><path d="M14 19a1 1 0 1 0 0 2h5a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-5a1 1 0 1 0 0 2h5v14z"/><path d="M15.714 12.7a1 1 0 0 0 .286-.697v-.006a1 1 0 0 0-.293-.704l-4-4a1 1 0 1 0-1.414 1.414L12.586 11H3a1 1 0 1 0 0 2h9.586l-2.293 2.293a1 1 0 1 0 1.414 1.414l4-4z"/></g></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <g fill="currentColor">
+                  <path d="M14 19a1 1 0 1 0 0 2h5a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-5a1 1 0 1 0 0 2h5v14z"/>
+                  <path d="M15.714 12.7a1 1 0 0 0 .286-.697v-.006a1 1 0 0 0-.293-.704l-4-4a1 1 0 1 0-1.414 1.414L12.586 11H3a1 1 0 1 0 0 2h9.586l-2.293 2.293a1 1 0 1 0 1.414 1.414l4-4z"/>
+                </g>
+              </svg>
               <span class="flex-1 ms-3 whitespace-nowrap">출근</span>
             </div>
           </li>
           <li>
             <div @click="checkOutProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="currentColor"><path fill-rule="evenodd" d="M11 20a1 1 0 0 0-1-1H5V5h5a1 1 0 1 0 0-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5a1 1 0 0 0 1-1" clip-rule="evenodd"/><path d="M21.714 12.7a1 1 0 0 0 .286-.697v-.006a1 1 0 0 0-.293-.704l-4-4a1 1 0 1 0-1.414 1.414L18.586 11H9a1 1 0 1 0 0 2h9.586l-2.293 2.293a1 1 0 0 0 1.414 1.414l4-4z"/></g></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <g fill="currentColor">
+                  <path fill-rule="evenodd" d="M11 20a1 1 0 0 0-1-1H5V5h5a1 1 0 1 0 0-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5a1 1 0 0 0 1-1" clip-rule="evenodd"/>
+                  <path d="M21.714 12.7a1 1 0 0 0 .286-.697v-.006a1 1 0 0 0-.293-.704l-4-4a1 1 0 1 0-1.414 1.414L18.586 11H9a1 1 0 1 0 0 2h9.586l-2.293 2.293a1 1 0 0 0 1.414 1.414l4-4z"/>
+                </g>
+              </svg>
               <span class="flex-1 ms-3 whitespace-nowrap">퇴근</span>
             </div>
           </li>
           <li>
-            <div @click="async () => {
-              const data = await axios.get('/api/commutes/late-people').then(res => res.data)
-              console.log(data)
+            <div @click="viewCommuteProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z"/>
+              </svg>
+              <span class="flex-1 ms-3 whitespace-nowrap">출근부</span>
+            </div>
+          </li>
+          <li>
+            <div @click="() => {
+              store.commit('setModal', {
+                isOpen: true,
+                content: h('p', '아직 개발되지 않았습니다.')
+              })
             }" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z"/></svg>
-              <span class="flex-1 ms-3 whitespace-nowrap">출근부</span> <!-- TODO 출근부 -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z"/>
+              </svg>
+              <span class="flex-1 ms-3 whitespace-nowrap">연차 조회</span>
             </div>
           </li>
           <li class='sidebar-section'>
-            <label> <input type='checkbox' :checked='calendarOptions.weekends' @change='handleWeekendsToggle' /> toggle
+            <label> <input type='checkbox' :checked='calendarOptions.weekends' @change='handleWeekendsToggle'/> toggle
               weekends </label>
           </li>
           <li class='sidebar-section w-full'>
             <h2>All Events ({{ currentEvents.length }})</h2>
             <div class="mt-1 flex gap-1">
-              <input @change="handleClickCheckbox" :checked="direction === 'asc'" id="direction" type="checkbox" />
+              <input @change="handleClickCheckbox" :checked="direction === 'asc'" id="direction" type="checkbox"/>
               <label for="direction">오름차순</label>
             </div>
             <ul>
