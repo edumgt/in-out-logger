@@ -23,9 +23,9 @@ public class LogAspect {
     public Object measureTime(ProceedingJoinPoint pjp) throws Throwable {
         MeasureTime measureTime = AopUtils.getAnnotation(pjp, MeasureTime.class);
         MeasureUnit unit = measureTime.unit();
-        long start = System.currentTimeMillis();
+        long start = unit == MeasureUnit.MILLI_SECOND ? System.currentTimeMillis() : System.nanoTime();
         Object proceed = pjp.proceed();
-        long end = System.currentTimeMillis();
+        long end = unit == MeasureUnit.MILLI_SECOND ? System.currentTimeMillis() : System.nanoTime();
         log.info("measure time : [{}] {}", end - start, unit.getString());
         return proceed;
     }
