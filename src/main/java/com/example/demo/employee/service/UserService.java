@@ -3,15 +3,15 @@ package com.example.demo.employee.service;
 import com.example.demo.common.constants.Redis;
 import com.example.demo.common.constants.Token;
 import com.example.demo.common.enums.EmploymentStatus;
+import com.example.demo.common.enums.JobLevel;
 import com.example.demo.common.exception.HttpException;
+import com.example.demo.common.service.redis.RedisService;
 import com.example.demo.common.utils.HttpUtils;
-import com.example.demo.employee.dto.request.SignUpRequestDto;
 import com.example.demo.employee.dto.request.LoginRequestDto;
+import com.example.demo.employee.dto.request.SignUpRequestDto;
 import com.example.demo.employee.dto.token.TokenDto;
 import com.example.demo.employee.entity.Employee;
-import com.example.demo.common.enums.JobLevel;
 import com.example.demo.employee.repository.EmployeeRepository;
-import com.example.demo.common.service.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -51,7 +51,7 @@ public class UserService {
             Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
             String clientIp = HttpUtils.getClientIp();
             TokenDto tokenDto =  jwtService.generateToken(authentication);
-//            redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
+            redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
             return tokenDto;
         } catch (BadCredentialsException e){
             throw new HttpException(HttpStatus.BAD_REQUEST, "유효하지 않은 비밀번호입니다.");

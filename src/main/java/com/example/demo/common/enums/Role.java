@@ -15,7 +15,7 @@ public enum Role {
         }
     }
 
-    public static Role from(String name){
+    public static Role nameOf(String name){
         return CONVERTER.get(name.toUpperCase());
     };
 }

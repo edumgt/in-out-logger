@@ -1,8 +1,6 @@
 import { useNProgress } from '@vueuse/integrations/useNProgress'
-import {useStore} from "vuex";
 
-
-export const useProgress = (targetFunction: () => Promise<any>) => {
+const useProgress = (targetFunction: () => Promise<any>) => {
   const { start, done, progress } = useNProgress()
   // if (Array.isArray(targetFunction)) {
   //   return async () => {
@@ -35,23 +33,4 @@ export const useProgress = (targetFunction: () => Promise<any>) => {
     return result
   }
 }
-export const useSpinner = (targetFunction: () => Promise<any>) => {
-  const store = useStore()
-  return async () => {
-    let result
-    store.commit('setIsLoading', true)
-    try {
-      result = await targetFunction()
-    } catch (e) {
-      console.error(e)
-      throw e
-    } finally {
-      store.commit('setIsLoading', false)
-    }
-    return result
-  }
-}
-
-export const sleep = (second: number) => {
-  return new Promise(resolve => setTimeout(resolve, second * 1000))
-}
+export default useProgress;

@@ -9,11 +9,10 @@ import com.example.demo.commute.mapper.CommuteMapper;
 import com.example.demo.commute.repository.CommuteRepository;
 import com.example.demo.employee.dto.response.LateEmployeeResponseDto;
 import com.example.demo.employee.entity.Employee;
-import com.example.demo.employee.entity.QEmployee;
-import com.example.demo.employee.mapper.EmployeeMapper;
 import com.querydsl.core.Tuple;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -30,25 +30,30 @@ public class CommuteService {
     private final CommuteRepository commuteRepository;
     private final CommuteMapper commuteMapper;
     private final JPAQueryFactory jpaQueryFactory;
-    private final EmployeeMapper employeeMapper;
-
+    @PersistenceContext
+    private EntityManager entityManager;
     public List<CommuteDto> getAllCommutes() {
         List<Commute> commutes = commuteRepository.findAll();
         List<CommuteDto> commuteDtos = commutes.stream().map(commuteMapper::toDto).toList();
         return commuteDtos;
     }
 
-    public void checkIn() {
+    public String checkIn() {
         Employee employee = SecurityUtils.getCurrentUser();
-        boolean isCheckedIn = commuteRepository.findByCreatedByAndDate(employee, LocalDate.now()).isPresent();
-        if (isCheckedIn) {
-            throw new HttpException(HttpStatus.BAD_REQUEST, "이미 출근 처리 되었습니다.");
+        Optional<Commute> optionalCommute = commuteRepository.findByCreatedByAndDate(employee, LocalDate.now());
+        Commute commute;
+        boolean checkInLogExists = optionalCommute.isPresent();
+        if(checkInLogExists) {
+            commute = optionalCommute.get();
+            commute.setCheckInTime(LocalTime.now());
+        } else {
+            commute = Commute.builder()
+                    .date(LocalDate.now())
+                    .checkInTime(LocalTime.now())
+                    .build();
         }
-        Commute commute = Commute.builder()
-                .date(LocalDate.now())
-                .checkInTime(LocalTime.now())
-                .build();
         commuteRepository.save(commute);
+        return checkInLogExists ? "출근 처리 갱신되었습니다" : "출근 처리 되었습니다.";
     }
 
     public String checkOut() {

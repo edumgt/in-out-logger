@@ -4,7 +4,7 @@ import { h, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/utils/axios.ts'
 import { useStore } from 'vuex'
-import { useProgress } from '@/utils/etc.ts'
+import useProgress from '@/hooks/useProgress.ts'
 import { isAxiosError } from 'axios'
 import { messageHandler } from '@/utils/error.ts'
 

@@ -1,8 +1,8 @@
 package com.example.demo.employee.entity;
 
+import com.example.demo.common.entity.CommonProperties;
 import com.example.demo.common.enums.EmploymentStatus;
 import com.example.demo.common.enums.JobLevel;
-import com.example.demo.common.entity.CommonProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

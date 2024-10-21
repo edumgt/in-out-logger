@@ -15,20 +15,21 @@ import java.util.List;
 public class CommuteController {
     private final CommuteService commuteService;
 
+
     @GetMapping("/{commuteId}")
-    public ResponseEntity<?> getOneCommute(@PathVariable Long commuteId) {
+    public ResponseEntity<?> getOne(@PathVariable Long commuteId) {
         return ResponseEntity.status(200).build();
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllCommutes() {
+    public ResponseEntity<?> getAll() {
         return ResponseEntity.status(200).build();
     }
 
     @PostMapping
     public ResponseEntity<?> checkIn() {
-        commuteService.checkIn();
-        return ResponseEntity.status(201).build();
+        String message = commuteService.checkIn();
+        return ResponseEntity.status(200).body(message);
     }
 
     @PatchMapping

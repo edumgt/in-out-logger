@@ -13,14 +13,14 @@ public enum JobLevel {
     STAFF, // 사원
     INTERN; // 인턴
 
-    private static final Map<String, JobLevel> HOLDER = new HashMap<>();
+    private static final Map<String, JobLevel> CONVERTER = new HashMap<>();
     static {
         for(JobLevel jobLevel : values()) {
-            HOLDER.put(jobLevel.name() , jobLevel);
+            CONVERTER.put(jobLevel.name() , jobLevel);
         }
     }
-    public static JobLevel from(String name) {
-        return HOLDER.get(name.toUpperCase());
+    public static JobLevel nameOf(String name) {
+        return CONVERTER.get(name.toUpperCase());
     }
     public static String getRole(JobLevel jobLevel) {
         return "ROLE_" + jobLevel.name();

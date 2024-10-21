@@ -1,8 +1,8 @@
 package com.example.demo.employee.service;
 
-import com.example.demo.employee.model.PrincipalDetails;
 import com.example.demo.common.enums.LoginType;
 import com.example.demo.employee.entity.Employee;
+import com.example.demo.employee.model.PrincipalDetails;
 import com.example.demo.employee.repository.EmployeeRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,7 +43,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         String hashedPassword = passwordEncoder.encode(id.toString());
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         Employee employee = employeeRepository.findByEmail(registrationId + "$" + id).orElseGet(() -> {
-            LoginType loginType = LoginType.from(registrationId);
+            LoginType loginType = LoginType.nameOf(registrationId);
             Employee newEmployee = Employee.builder()
                     .name(username)
                     .password(hashedPassword)

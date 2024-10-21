@@ -2,12 +2,12 @@ package com.example.demo.common.filter;
 
 import com.example.demo.common.constants.Redis;
 import com.example.demo.common.constants.Token;
-import com.example.demo.common.utils.HttpUtils;
+import com.example.demo.common.service.redis.RedisService;
 import com.example.demo.common.tools.Pair;
+import com.example.demo.common.utils.HttpUtils;
 import com.example.demo.employee.dto.token.TokenDto;
 import com.example.demo.employee.service.AuthService;
 import com.example.demo.employee.service.JwtService;
-import com.example.demo.common.service.redis.RedisService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,7 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -46,7 +45,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     if (refreshTokenPair.getFirst()) { // 조회 완료 후 검사
                         TokenDto tokenDto = jwtService.reissueToken(accessTokenPair.getSecond()); // 액세스토큰 / 리프레시토큰 재발급
                         authService.setAuthentication(tokenDto.getAccessToken());
-//                        redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
+                        redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
                         response.setHeader(Token.AUTHORIZATION_HEADER, Token.GRANT_TYPE + " " + tokenDto.getAccessToken());
                     }
                 }

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch, watchEffect } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/utils/axios'
 import { useStore } from 'vuex'
-import { useProgress } from '@/utils/etc.ts'
+import useProgress from '@/hooks/useProgress.ts'
 
 const route = useRoute()
 const router = useRouter()

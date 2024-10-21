@@ -3,15 +3,16 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import {computed, h, nextTick, onMounted, onUnmounted, ref} from 'vue'
+import { computed, h, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import axios from '@/utils/axios.ts'
-import {useProgress} from '@/utils/etc.ts'
-import {useStore} from 'vuex'
-import {InputValue, SelectOption, selectOptions} from '@/stores/vuex/modules/modal.ts'
-import {CalendarOptions, DateSelectArg, EventApi, EventClickArg} from '@fullcalendar/core'
-import {dateToNumber} from '@/utils/string.ts'
-import {isAxiosError} from 'axios'
-import {messageHandler} from '@/utils/error.ts'
+import useProgress from '@/hooks/useProgress.ts'
+import { useStore } from 'vuex'
+import { InputValue, SelectOption, selectOptions } from '@/stores/vuex/modules/modal.ts'
+import { CalendarOptions, DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
+import { dateToNumber } from '@/utils/string.ts'
+import { isAxiosError } from 'axios'
+import { messageHandler } from '@/utils/error.ts'
+import { vacation, VacationType } from '@/types/vacation.ts'
 
 type Direction = 'asc' | 'desc'
 
@@ -19,6 +20,7 @@ interface FetchedYears {
   [key: number]: boolean;
 }
 
+const vacationType = ref<VacationType>('종일 휴가');
 const calendarRef = ref<InstanceType<typeof FullCalendar>>()
 const calendarApi = computed(() => (calendarRef.value as InstanceType<typeof FullCalendar>).getApi())
 const currentEvents = ref<EventApi[]>([])
@@ -27,31 +29,54 @@ const fetchedYears = ref<FetchedYears>({})
 const handleWeekendsToggle = () => {
   calendarOptions.value.weekends = !calendarOptions.value.weekends // update a property
 }
-const selectBoxValue = computed(() => store.getters.getSelectBoxValue)
 
+const isVacation = computed(() => store.getters.isVacation)
+const selectBoxValue = computed(() => store.getters.getSelectBoxValue)
 const handleDateSelect = (selectInfo: DateSelectArg) => {
   store.commit('setModal', {
     isOpen: true,
     modalType: 'input',
-    content: h('div', {'class': 'flex justify-between'}, [
-      h('p', '일정명을 입력해주세요.'),
-      h('div', {'class': `flex gap-1`}, [
-        h('p', {'class': 'mt-2 mr-1'}, '배경색 지정'),
+    content: h('div', { 'class': 'flex justify-between' }, [
+      h('div', { 'class': 'flex flex-col' }, [
+        h('p', '일정명을 입력해주세요.'),
+        h('div', { 'class': 'flex flex-row pt-2 pl-1 gap-2' }, [
+          h('label', { 'class': 'text-xs', 'for': 'isVacation' }, '휴가입니다.'),
+          h('input', {
+              'type': 'checkbox',
+              onChange(event: any) {
+                store.commit('setIsVacation', event.target.checked)
+                if (event.target.checked) {
+                  store.commit('setPlaceholder', '연차 사유');
+                  event.target.nextSibling.classList.remove('hidden')
+                } else {
+                  store.commit('setPlaceholder', '일정명');
+                  event.target.nextSibling.classList.add('hidden')
+                }
+              }
+            }
+          ),
+          h('select', {'class': 'hidden py-1','id': 'vacationType',
+            onChange(event: any){
+              vacationType.value = event.target.value
+            }
+          }, Object.values(vacation).map(name => h('option', {'value': name}, name))
+          )
+        ])
+      ]),
+      h('div', { 'class': `flex gap-1` }, [
+        h('p', { 'class': 'mt-2 mr-1' }, '배경색 지정'),
         h('select', {
             onChange(event: any) {
               store.commit('setSelectBoxValue', event.target.value)
             }
           },
           selectOptions.map((option: SelectOption) =>
-            h('option', {value: option}, option)
+            h('option', { value: option }, option)
           )
         )
       ])
     ]),
     placeholder: '일정명',
-    options: {
-      propagation: true
-    },
     onConfirm: async (inputValue: InputValue) => {
       let calendarApi = selectInfo.view.calendar
       calendarApi.unselect() // clear date selection
@@ -59,21 +84,41 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
       if (!inputValue) {
         return
       }
-      const response = await axios.post('/api/calendar/events', {
-        title: `${inputValue} (${username.value})`,
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
-        backgroundColor: selectBoxValue.value
-      })
-      const {id, start, end, title} = response.data
-      calendarApi.addEvent({
-        id,
-        title,
-        start,
-        end,
-        allDay: true,
-        backgroundColor: selectBoxValue.value,
-      })
+      try {
+        const response = await axios.post('/api/calendar/events', {
+          title: inputValue,
+          start: selectInfo.startStr,
+          end: selectInfo.endStr,
+          backgroundColor: selectBoxValue.value,
+          isVacation: isVacation.value,
+          vacationType: vacationType.value
+        })
+        if(isVacation.value){
+          store.commit('setModal', {
+            isOpen: true,
+            content: h('p','휴가 신청이 완료되었습니다.')
+          })
+        }
+        const { id, start, end, title } = response.data
+        calendarApi.addEvent({
+          id,
+          title,
+          start,
+          end,
+          allDay: true,
+          backgroundColor: selectBoxValue.value
+        })
+      } catch(e){
+        if(isAxiosError(e)){
+          store.commit('setModal', {
+            isOpen: true,
+            content: h('p', messageHandler(e))
+          })
+        }
+        throw e
+      } finally {
+        vacationType.value = '종일 휴가' // 초기화
+      }
     }
   })
 
@@ -91,7 +136,7 @@ const handleEventClick = (clickInfo: EventClickArg) => {
         if (isAxiosError(e)) {
           store.commit('setModal', {
             isOpen: true,
-            content: h('p', messageHandler(e)),
+            content: h('p', messageHandler(e))
           })
         }
       }
@@ -143,9 +188,29 @@ const calendarOptions = ref<CalendarOptions>({
   select: handleDateSelect,
   eventClick: handleEventClick,
   eventsSet: handleEvents,
+  // async eventDragStop(arg) {
+  //   console.log('drag end', arg.event.startStr,arg.event.endStr)
+  // },
+  eventDrop(arg) {
+    axios.patch('/api/calendar/events/' + arg.event.id, {
+      start: arg.event.startStr,
+      end: arg.event.endStr
+    }).catch((e:any) => {
+      store.commit('setModal',{
+        isOpen: true,
+        content: h('p', messageHandler(e)),
+        onClose: () => arg.revert(),
+        onConfirm: () => arg.revert()
+      })
+      throw e
+    })
+
+
+
+  },
   async datesSet(arg) {
     store.commit('setIsLoading', true)
-    const {start, end} = arg
+    const { start, end } = arg
     const startTime = start.getTime()
     const endTime = end.getTime()
 
@@ -154,18 +219,19 @@ const calendarOptions = ref<CalendarOptions>({
     const currentDate = new Date(averageTime)
     const currentYear = currentDate.getFullYear()
     if (currentYear < 2000) {
+      const onClose = () => calendarApi.value.gotoDate(new Date(2000, 1,1))
       store.commit('setModal', {
         isOpen: true,
         content: h('p', '2000년 이전 날짜는 조회 불가능합니다.'),
-        onClose: () => calendarApi.value.gotoDate(new Date()),
-        onConfirm: () => calendarApi.value.gotoDate(new Date())
+        onClose,
+        onConfirm: onClose
       })
       store.commit('setIsLoading', false)
       return
     }
     const events = await fetchEvents(currentYear)
     if (events) {
-      for (const {id, title, start, end, backgroundColor} of events) {
+      for (const { id, title, start, end, backgroundColor } of events) {
         calendarApi.value.addEvent({
           id,
           title,
@@ -211,11 +277,15 @@ onUnmounted(() => {
 
 const handleCheckIn = async () => {
   try {
-    await axios.post('/api/commute')
+    const message = await axios.post('/api/commute').then((res: any) => res.data).catch((e) => e.response.data)
+    store.commit('setModal', {
+      isOpen: true,
+      content: h('p', message)
+    })
   } catch (e: any) {
     store.commit('setModal', {
       isOpen: true,
-      content: h('p', messageHandler(e)),
+      content: h('p', messageHandler(e))
     })
     throw e
   }
@@ -225,7 +295,7 @@ const handleCheckOut = async () => {
     const response = await axios.patch('/api/commute')
     store.commit('setModal', {
       isOpen: true,
-      content: h('p', response.data),
+      content: h('p', response.data)
     })
   } catch (e: any) {
     store.commit('setModal', {
@@ -262,12 +332,10 @@ const viewCommute = async () => {
       ))
     ])
   })
-  console.log(data)
 }
 
 
 const store = useStore()
-const username = computed(() => store.getters.getUsername)
 
 const handleNavigateCalendar = (eventStartDate: string) => {
   calendarApi.value.gotoDate(eventStartDate)
@@ -284,7 +352,7 @@ const viewCommuteProgress = useProgress(viewCommute)
           <li>
             <router-link to="/" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <path fill="currentColor" d="m12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81zM12 3L2 12h3v8h6v-6h2v6h6v-8h3z"/>
+                <path fill="currentColor" d="m12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81zM12 3L2 12h3v8h6v-6h2v6h6v-8h3z" />
               </svg>
               <span class="ms-3">메인으로</span>
             </router-link>
@@ -293,8 +361,8 @@ const viewCommuteProgress = useProgress(viewCommute)
             <div @click="checkInProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <g fill="currentColor">
-                  <path d="M14 19a1 1 0 1 0 0 2h5a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-5a1 1 0 1 0 0 2h5v14z"/>
-                  <path d="M15.714 12.7a1 1 0 0 0 .286-.697v-.006a1 1 0 0 0-.293-.704l-4-4a1 1 0 1 0-1.414 1.414L12.586 11H3a1 1 0 1 0 0 2h9.586l-2.293 2.293a1 1 0 1 0 1.414 1.414l4-4z"/>
+                  <path d="M14 19a1 1 0 1 0 0 2h5a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-5a1 1 0 1 0 0 2h5v14z" />
+                  <path d="M15.714 12.7a1 1 0 0 0 .286-.697v-.006a1 1 0 0 0-.293-.704l-4-4a1 1 0 1 0-1.414 1.414L12.586 11H3a1 1 0 1 0 0 2h9.586l-2.293 2.293a1 1 0 1 0 1.414 1.414l4-4z" />
                 </g>
               </svg>
               <span class="flex-1 ms-3 whitespace-nowrap">출근</span>
@@ -304,8 +372,8 @@ const viewCommuteProgress = useProgress(viewCommute)
             <div @click="checkOutProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <g fill="currentColor">
-                  <path fill-rule="evenodd" d="M11 20a1 1 0 0 0-1-1H5V5h5a1 1 0 1 0 0-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5a1 1 0 0 0 1-1" clip-rule="evenodd"/>
-                  <path d="M21.714 12.7a1 1 0 0 0 .286-.697v-.006a1 1 0 0 0-.293-.704l-4-4a1 1 0 1 0-1.414 1.414L18.586 11H9a1 1 0 1 0 0 2h9.586l-2.293 2.293a1 1 0 0 0 1.414 1.414l4-4z"/>
+                  <path fill-rule="evenodd" d="M11 20a1 1 0 0 0-1-1H5V5h5a1 1 0 1 0 0-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5a1 1 0 0 0 1-1" clip-rule="evenodd" />
+                  <path d="M21.714 12.7a1 1 0 0 0 .286-.697v-.006a1 1 0 0 0-.293-.704l-4-4a1 1 0 1 0-1.414 1.414L18.586 11H9a1 1 0 1 0 0 2h9.586l-2.293 2.293a1 1 0 0 0 1.414 1.414l4-4z" />
                 </g>
               </svg>
               <span class="flex-1 ms-3 whitespace-nowrap">퇴근</span>
@@ -314,7 +382,7 @@ const viewCommuteProgress = useProgress(viewCommute)
           <li>
             <div @click="viewCommuteProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z"/>
+                <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z" />
               </svg>
               <span class="flex-1 ms-3 whitespace-nowrap">출근부</span>
             </div>
@@ -327,19 +395,19 @@ const viewCommuteProgress = useProgress(viewCommute)
               })
             }" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z"/>
+                <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z" />
               </svg>
               <span class="flex-1 ms-3 whitespace-nowrap">연차 조회</span>
             </div>
           </li>
           <li class='sidebar-section'>
-            <label> <input type='checkbox' :checked='calendarOptions.weekends' @change='handleWeekendsToggle'/> toggle
+            <label> <input type='checkbox' :checked='calendarOptions.weekends' @change='handleWeekendsToggle' /> toggle
               weekends </label>
           </li>
           <li class='sidebar-section w-full'>
             <h2>All Events ({{ currentEvents.length }})</h2>
             <div class="mt-1 flex gap-1">
-              <input @change="handleClickCheckbox" :checked="direction === 'asc'" id="direction" type="checkbox"/>
+              <input @change="handleClickCheckbox" :checked="direction === 'asc'" id="direction" type="checkbox" />
               <label for="direction">오름차순</label>
             </div>
             <ul>

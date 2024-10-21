@@ -12,17 +12,17 @@ export interface ModalModuleState {
   inputValue: InputValue
   modalType: ModalType
   selectBoxValue: SelectOption
+  isVacation: boolean
 }
 
 
-
-export const selectOptions = ['forest', 'red', 'black', 'skyblue','orange','purple'] as const
+export const selectOptions = ['forest', 'red', 'black', 'skyblue', 'orange', 'purple'] as const
 export type SelectOption = ElementType<typeof selectOptions>
 export type InputValue = string
 export type OnConfirm = (() => void) | ((inputValue: InputValue) => void) | null
 export type OnClose = (() => void) | null
 
-export const modalTypes = ['alert','input'] as const
+export const modalTypes = ['alert', 'input'] as const
 
 export type ModalType = ElementType<typeof modalTypes>
 
@@ -37,7 +37,8 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       inputValue: '',
       placeholder: '',
       modalType: 'alert', // default
-      selectBoxValue: 'green'
+      selectBoxValue: 'green',
+      isVacation: false
     }
   },
   actions: {},
@@ -50,7 +51,8 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       modalType,
       placeholder,
       inputValue,
-      selectBoxValue
+      selectBoxValue,
+      isVacation
     }: ModalModuleState) {
       state.content = content ?? null
       state.isOpen = isOpen ?? false
@@ -60,12 +62,19 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       state.placeholder = placeholder ?? ''
       state.inputValue = inputValue ?? ''
       state.selectBoxValue = selectBoxValue ?? 'green'
+      state.isVacation = isVacation ?? false
     },
     setInputValue(state, payload) {
       state.inputValue = payload
     },
     setSelectBoxValue(state, payload) {
       state.selectBoxValue = payload
+    },
+    setIsVacation(state, payload) {
+      state.isVacation = payload
+    },
+    setPlaceholder(state, payload){
+      state.placeholder = payload
     }
   },
   getters: {
@@ -95,13 +104,16 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
         state.isOpen = false
         if (state.modalType === 'input') {
           state.onConfirm?.(state.inputValue)
-        } else if(state.modalType === 'alert'){
+        } else if (state.modalType === 'alert') {
           state.onConfirm?.()
         }
       }
     },
     getSelectBoxValue(state) {
       return state.selectBoxValue
+    },
+    isVacation(state){
+      return state.isVacation
     }
   }
 }

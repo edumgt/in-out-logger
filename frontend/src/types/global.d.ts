@@ -13,5 +13,6 @@ declare module "vuex" {
   export * from "vuex/types/vue.d.ts";
 }
 
-type ElementType<T> = T extends (infer U)[] ? U : never
+
+type ElementType<T> = T extends (infer U)[] ? U : any
 

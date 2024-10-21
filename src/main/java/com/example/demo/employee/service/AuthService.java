@@ -1,9 +1,9 @@
 package com.example.demo.employee.service;
 
-import com.example.demo.employee.model.PrincipalDetails;
 import com.example.demo.common.constants.Token;
-import com.example.demo.employee.entity.Employee;
 import com.example.demo.common.enums.JobLevel;
+import com.example.demo.employee.entity.Employee;
+import com.example.demo.employee.model.PrincipalDetails;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,7 +37,7 @@ public class AuthService {
                 .id(Long.parseLong(id))
                 .email(subject)
                 .name(name)
-                .jobLevel(JobLevel.from(role))
+                .jobLevel(JobLevel.nameOf(role))
                 .build();
         UserDetails principal = new PrincipalDetails(employee); // PrincipalDetails(UserDetails)에 User
 

@@ -8,7 +8,6 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "calendar_event")
@@ -28,4 +27,8 @@ public class CalendarEvent extends CommonProperties {
     private LocalDate end;
     @Column(columnDefinition = "VARCHAR(30)")
     private String backgroundColor;
+
+    @JoinColumn(name = "vacation_id")
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    private Vacation vacation;
 }

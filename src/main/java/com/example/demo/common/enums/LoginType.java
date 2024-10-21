@@ -14,7 +14,7 @@ public enum LoginType {
         }
     }
 
-    public static LoginType from(String name){
+    public static LoginType nameOf(String name){
         return CONVERTER.get(name.toUpperCase());
     };
 
