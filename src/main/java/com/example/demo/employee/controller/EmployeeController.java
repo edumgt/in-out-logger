@@ -14,11 +14,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/employees")
 @RequiredArgsConstructor
+@Secured("ROLE_INTERN")
 public class EmployeeController {
     private final EmployeeService employeeService;
 
     @GetMapping("/annual-leave")
-    @Secured("ROLE_INTERN")
     public ResponseEntity<?> getAllAnnualLeave(){
         List<AnnualLeaveResponseDto> data = employeeService.getAllAnnualLeave();
         return ResponseEntity.status(200).body(data);

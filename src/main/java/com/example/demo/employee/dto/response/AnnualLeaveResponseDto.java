@@ -11,5 +11,5 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AnnualLeaveResponseDto {
     private String employeeName;
-    private Integer annualLeave;
+    private Double annualLeave;
 }

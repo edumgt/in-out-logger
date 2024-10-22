@@ -4,7 +4,6 @@ import com.example.demo.common.entity.CommonProperties;
 import com.example.demo.common.enums.EmploymentStatus;
 import com.example.demo.common.enums.JobLevel;
 import jakarta.persistence.*;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -40,9 +39,8 @@ public class Employee extends CommonProperties {
     @Column(name = "employment_status", columnDefinition = "VARCHAR(20)")
     @Enumerated(EnumType.STRING)
     private EmploymentStatus employmentStatus; // 고용 상태 정규직 / 계약직
-    @Column(name = "annual_leave", columnDefinition = "int default 0")
-    @Builder.Default
-    private Integer annualLeave = 0;
+    @Column(name = "annual_leave", columnDefinition = "DOUBLE default 0")
+    private Double annualLeave;
 //    @Column(columnDefinition = "VARCHAR(50)")
 //    private String department; // 부서
 }

@@ -3,8 +3,8 @@ package com.example.demo.employee.controller;
 
 import com.example.demo.common.constants.Token;
 import com.example.demo.common.utils.SecurityUtils;
-import com.example.demo.employee.dto.request.SignUpRequestDto;
 import com.example.demo.employee.dto.request.LoginRequestDto;
+import com.example.demo.employee.dto.request.SignUpRequestDto;
 import com.example.demo.employee.dto.token.TokenDto;
 import com.example.demo.employee.service.AuthService;
 import com.example.demo.employee.service.UserService;
@@ -41,7 +41,6 @@ public class AuthController {
     @Secured("ROLE_INTERN")
     public ResponseEntity<?> test() {
         var auth = SecurityUtils.getAuthentication();
-
         Object principal = auth.getPrincipal();
         if (principal instanceof UserDetails userDetails) {
             log.info("userDetails: {}", userDetails);

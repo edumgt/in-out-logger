@@ -11,7 +11,9 @@ import com.example.demo.calendar.repository.CalendarEventRepository;
 import com.example.demo.common.exception.HttpException;
 import com.example.demo.common.utils.SecurityUtils;
 import com.example.demo.employee.entity.Employee;
+import com.example.demo.employee.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,6 +31,7 @@ public class CalendarService {
     private final CalendarMapper calendarMapper;
     private final CalendarEventRepository calendarEventRepository;
     private final VacationService vacationService;
+    private final EmployeeRepository employeeRepository;
 
     public CalendarEventDto createEvent(CalendarEventDto calendarEventDto) {
         Employee currentUser = SecurityUtils.getCurrentUser();
@@ -46,9 +50,9 @@ public class CalendarService {
                 }
             }
             vacation = vacationService.vacationRequest(calendarEventDto, vacationType, currentUser); // 휴가 요청 생성
-            calendarEventDto.setTitle("%s (%s)" .formatted(vacationType.getDescription(), currentUser.getName()));
+            calendarEventDto.setTitle("%s (%s)".formatted(vacationType.getDescription(), currentUser.getName()));
         } else { // 휴가가 아니라면 일정에 사용자명 추가
-            calendarEventDto.setTitle("%s (%s)" .formatted(calendarEventDto.getTitle(), currentUser.getName()));
+            calendarEventDto.setTitle("%s (%s)".formatted(calendarEventDto.getTitle(), currentUser.getName()));
         }
         CalendarEvent calendarEvent = calendarMapper.toEntity(calendarEventDto);
         if (vacation != null) {
@@ -59,6 +63,7 @@ public class CalendarService {
         calendarEventDto = calendarMapper.toDto(calendarEvent);
         return calendarEventDto;
     }
+
     public void deleteEvent(Long eventId) {
         Employee employee = SecurityUtils.getCurrentUser();
         CalendarEvent calendarEvent = calendarEventRepository.findById(eventId)
@@ -66,8 +71,18 @@ public class CalendarService {
         if (!Objects.equals(employee.getId(), calendarEvent.getCreatedBy().getId())) {
             throw new HttpException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
         }
+        Vacation vacation = calendarEvent.getVacation();
+        if(vacation != null){
+            Employee requester = vacation.getCreatedBy();
+//            if (!Objects.equals(employee.getId(), requester.getId())) { // 본인이 삭제해도 연차갯수는 안늘어나게
+            double dateDiff = ChronoUnit.DAYS.between(vacation.getStart(), vacation.getEnd()) + 1;
+            if(VacationType.isHalf(vacation.getVacationType())){
+                dateDiff -= 0.5;
+            }
+            employeeRepository.increaseAnnualLeave(requester.getId(), dateDiff);
+//            }
+        }
         calendarEventRepository.delete(calendarEvent);
-
     }
 
     public List<CalendarEventDto> getEventsByYear(int eventYear) {
@@ -85,7 +100,16 @@ public class CalendarService {
         }
         calendarEvent.setStart(changeEventDateRequestDto.getStart());
         calendarEvent.setEnd(changeEventDateRequestDto.getEnd());
-        calendarEventRepository.save(calendarEvent);
 
+        Vacation vacation = calendarEvent.getVacation();
+        if (vacation != null) {
+            LocalDate start = changeEventDateRequestDto.getStart();
+            LocalDate end = changeEventDateRequestDto.getEnd().minusDays(1);
+            Employee requester = vacation.getCreatedBy();
+            vacationService.validateVacationDate(start, end, requester);
+            vacation.setStart(start);
+            vacation.setEnd(end);
+        }
+        calendarEventRepository.save(calendarEvent);
     }
 }

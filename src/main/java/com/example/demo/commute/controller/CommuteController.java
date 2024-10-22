@@ -6,6 +6,7 @@ import com.example.demo.employee.dto.response.LateEmployeeDetailsDto;
 import com.example.demo.employee.dto.response.LateEmployeeResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 @RequestMapping("/api/commute")
 @RestController
 @RequiredArgsConstructor
+@Secured("ROLE_INTERN")
 public class CommuteController {
     private final CommuteService commuteService;
 

@@ -13,6 +13,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/calendar/events")
+@Secured("ROLE_INTERN")
 public class CalendarEventController {
 
     private final CalendarService calendarService;
@@ -24,13 +25,11 @@ public class CalendarEventController {
     }
 
     @PostMapping
-    @Secured("ROLE_INTERN")
     public ResponseEntity<?> createEvent(@RequestBody CalendarEventDto calendarEventDto) {
         CalendarEventDto result = calendarService.createEvent(calendarEventDto);
         return ResponseEntity.status(201).body(result);
     }
     @PatchMapping("/{eventId}")
-    @Secured("ROLE_INTERN")
     public ResponseEntity<?> changeEventDate(@RequestBody ChangeEventDateRequestDto changeEventDateRequestDto, @PathVariable Long eventId) {
         calendarService.changeEventDate(eventId, changeEventDateRequestDto);
         return ResponseEntity.status(200).build();
