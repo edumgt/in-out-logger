@@ -10,7 +10,7 @@ import { useStore } from 'vuex'
 import { InputValue, SelectOption, selectOptions } from '@/stores/vuex/modules/modal.ts'
 import { CalendarOptions, DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
 import { dateToNumber } from '@/utils/string.ts'
-import { isAxiosError } from 'axios'
+import { AxiosResponse, isAxiosError } from 'axios'
 import { messageHandler } from '@/utils/error.ts'
 import { vacation, VacationType } from '@/types/vacation.ts'
 import useTable, { TableData } from '@/hooks/useTable.ts'
@@ -271,7 +271,7 @@ onUnmounted(() => {
 
 const handleCheckIn = async () => {
   try {
-    const message = await axios.post('/api/commute').then((res: any) => res.data).catch((e) => e.response.data)
+    const message = await axios.post('/api/commute').then((res: AxiosResponse) => res.data).catch((e) => e.response.data)
     store.commit('setModal', {
       isOpen: true,
       content: h('p', message)
@@ -302,13 +302,19 @@ const handleCheckOut = async () => {
 const checkInProgress = useProgress(handleCheckIn)
 const checkOutProgress = useProgress(handleCheckOut)
 
+
+
 const viewAnnualLeave = async () => {
   const tableHeaders = {
     employeeName: '이름',
     annualLeave: '잔여 연차'
   }
-  const data = await axios.get('/api/employees/annual-leave').then((res: any) => res.data)
-  table(tableHeaders, data)
+  const data = await axios.get('/api/employees/annual-leave').then((res: AxiosResponse) => res.data)
+  table(tableHeaders, data, {
+    onCellClick: {
+      // 여기에 tableHeaders로 입력한 객체의 key가 자동완성으로 떠야하는데 뜨질 않음
+    }
+  })
 }
 
 const viewCommute = async () => {
@@ -317,28 +323,26 @@ const viewCommute = async () => {
     lateEmployeeName: '이름',
     lateCount: '지각 횟수'
   }
-  const lateEmployeesData = await axios.get('/api/commute/employees/late').then((res: any) => res.data)
+  const lateEmployeesData = await axios.get('/api/commute/employees/late').then((res: AxiosResponse) => res.data)
   const setTable = () => {
     table(tableHeaders, lateEmployeesData, {
-      callback: {
-        lateCount: async (rowData: TableData) => {
-          const detailTableHeaders = {
-            date: '날짜',
-            employeeName: '이름',
-            checkInTime: '출근',
-            checkOutTime: '퇴근'
-          }
-          const { employeeId, date } = rowData
-          const [year, month, _day] = date.split('-')
-          const detailData = await axios.get(`/api/commute/employees/${employeeId}/late/years/${year}/months/${month}`).then((res: any) => res.data)
-          table(detailTableHeaders, detailData, {
-            additionalPayload: {
-              closeText: '뒤로',
-              onClose: setTable
-            }
-          }) // end of inner table
+      onRowClick: async (rowData: TableData) => {
+        const detailTableHeaders = {
+          date: '날짜',
+          employeeName: '이름',
+          checkInTime: '출근',
+          checkOutTime: '퇴근'
         }
-      }, // end of callback
+        const { employeeId, date } = rowData
+        const [year, month, _day] = date.split('-')
+        const detailData = await axios.get(`/api/commute/employees/${employeeId}/late/years/${year}/months/${month}`).then((res: AxiosResponse) => res.data)
+        table(detailTableHeaders, detailData, {
+          additionalPayload: {
+            closeText: '뒤로',
+            onClose: setTable
+          }
+        }) // end of inner table
+      }
     }) // end of outer table
   }
   setTable()
