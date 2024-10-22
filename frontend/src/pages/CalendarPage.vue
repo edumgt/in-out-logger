@@ -3,7 +3,7 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import { computed, h, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, h, onMounted, onUnmounted, ref } from 'vue'
 import axios from '@/utils/axios.ts'
 import useProgress from '@/hooks/useProgress.ts'
 import { useStore } from 'vuex'
@@ -13,7 +13,7 @@ import { dateToNumber } from '@/utils/string.ts'
 import { isAxiosError } from 'axios'
 import { messageHandler } from '@/utils/error.ts'
 import { vacation, VacationType } from '@/types/vacation.ts'
-import useTable from '@/hooks/useTable.ts'
+import useTable, { TableData } from '@/hooks/useTable.ts'
 
 type Direction = 'asc' | 'desc'
 
@@ -247,11 +247,6 @@ const calendarOptions = ref<CalendarOptions>({
     }
     store.commit('setIsLoading', false)
   }
-  /* you can update a remote database when these fire:
-  eventAdd:
-  eventChange:
-  eventRemove:
-  */
 })
 const fetchEvents = async (year: number) => {
   if (fetchedYears.value[year]) {
@@ -260,22 +255,18 @@ const fetchEvents = async (year: number) => {
   console.log('data fetching...')
   const response = await axios.get(`/api/calendar/events/${year}`)
   fetchedYears.value[year] = true
-  console.log('res', response.data)
   return response.data
 }
 
 
 onMounted(async () => {
-  await nextTick()
   for (let i = 2000; i < 2100; i++) {
     fetchedYears.value[i] = false
   }
 })
 
 onUnmounted(() => {
-  store.commit('setModal', {
-    isOpen: false
-  })
+  store.getters.handleModalClose()
 })
 
 const handleCheckIn = async () => {
@@ -326,8 +317,32 @@ const viewCommute = async () => {
     lateEmployeeName: '이름',
     lateCount: '지각 횟수'
   }
-  const data = await axios.get('/api/commute/late-people').then((res: any) => res.data)
-  table(tableHeaders, data)
+  const lateEmployeesData = await axios.get('/api/commute/employees/late').then((res: any) => res.data)
+  const setTable = () => {
+    table(tableHeaders, lateEmployeesData, {
+      callback: {
+        lateCount: async (rowData: TableData) => {
+          const detailTableHeaders = {
+            date: '날짜',
+            employeeName: '이름',
+            checkInTime: '출근',
+            checkOutTime: '퇴근'
+          }
+          const { employeeId, date } = rowData
+          const [year, month, _day] = date.split('-')
+          const detailData = await axios.get(`/api/commute/employees/${employeeId}/late/years/${year}/months/${month}`).then((res: any) => res.data)
+          table(detailTableHeaders, detailData, {
+            additionalPayload: {
+              closeText: '뒤로',
+              onClose: setTable
+            }
+          }) // end of inner table
+        }
+      }, // end of callback
+    }) // end of outer table
+  }
+  setTable()
+
 }
 
 const table = useTable()

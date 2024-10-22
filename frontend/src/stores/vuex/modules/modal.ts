@@ -7,7 +7,9 @@ export interface ModalModuleState {
   isOpen: boolean
   content: VNode | null
   onClose: OnClose
+  closeText: string
   onConfirm: OnConfirm
+  confirmText: string
   placeholder: string
   inputValue: InputValue
   modalType: ModalType
@@ -38,7 +40,9 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       placeholder: '',
       modalType: 'alert', // default
       selectBoxValue: 'green',
-      isVacation: false
+      isVacation: false,
+      closeText: '닫기',
+      confirmText: '확인'
     }
   },
   actions: {},
@@ -52,7 +56,9 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       placeholder,
       inputValue,
       selectBoxValue,
-      isVacation
+      isVacation,
+      confirmText,
+      closeText
     }: ModalModuleState) {
       state.content = content ?? null
       state.isOpen = isOpen ?? false
@@ -63,6 +69,8 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       state.inputValue = inputValue ?? ''
       state.selectBoxValue = selectBoxValue ?? 'green'
       state.isVacation = isVacation ?? false
+      state.confirmText = confirmText ?? '확인'
+      state.closeText = closeText ?? '닫기'
     },
     setInputValue(state, payload) {
       state.inputValue = payload
@@ -114,6 +122,12 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
     },
     isVacation(state){
       return state.isVacation
+    },
+    getConfirmText(state){
+      return state.confirmText
+    },
+    getCloseText(state){
+      return state.closeText
     }
   }
 }

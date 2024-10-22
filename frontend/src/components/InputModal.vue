@@ -7,6 +7,8 @@ const isModalOpen = computed(() => store.getters.isInputModalOpen)
 const handleClose = computed(() => store.getters.handleModalClose)
 const handleConfirm = computed(() => store.getters.handleModalConfirm)
 const inputValue = computed(() => store.getters.getInputValue)
+const closeText = computed(() => store.getters.getCloseText)
+const confirmText = computed(() => store.getters.getConfirmText)
 
 const updateInputState = (e: any) => {
   // 단방향 바인딩하고 react처럼 state 변경하는 식으로 처리
@@ -39,8 +41,8 @@ watch([isModalOpen],async () => {
           :placeholder="store.getters.getPlaceholder"
         />
         <div class="flex justify-end space-x-4">
-          <button class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition duration-300" @click="handleClose">닫기</button>
-          <button class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300" @click="handleConfirm">확인</button>
+          <button class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition duration-300" @click="handleClose">{{ closeText }}</button>
+          <button class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300" @click="handleConfirm">{{ confirmText }}</button>
         </div>
       </div>
     </div>

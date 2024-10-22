@@ -13,7 +13,8 @@ watchEffect(() => {
 const handleClose = computed(() => store.getters.handleModalClose)
 const handleConfirm = computed(() => store.getters.handleModalConfirm)
 const content = computed(() => store.getters.getContent)
-
+const closeText = computed(() => store.getters.getCloseText)
+const confirmText = computed(() => store.getters.getConfirmText)
 </script>
 
 <template>
@@ -23,10 +24,10 @@ const content = computed(() => store.getters.getContent)
         <component :is="content" :key="content" class="text-lg mb-4"></component>
         <div class="flex justify-end space-x-4">
           <button class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition duration-300" @click="handleClose">
-            닫기
+            {{ closeText }}
           </button>
           <button class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300" @click="handleConfirm">
-            확인
+            {{ confirmText }}
           </button>
         </div>
       </div>

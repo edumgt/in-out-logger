@@ -1,18 +1,29 @@
 import { h } from 'vue'
 import { useStore } from 'vuex'
+import { ModalModuleState } from '../stores/vuex/modules/modal.ts'
 
 export interface TableHeaders {
   [key: string]: string
 }
+
 export type TableData = {
   [K in keyof TableHeaders]: string | number
+}
+export type TableRowCallback = {
+  [K in keyof TableHeaders]?: (rowData: TableData, cellValue: string | number) => void
+}
+export interface TableOptions {
+  callback?: TableRowCallback
+  additionalPayload?: Partial<ModalModuleState>
 }
 
 const useTable = () => {
   const store = useStore()
-  return (tableHeaders: TableHeaders, data: TableData[]) => {
+  return (tableHeaders: TableHeaders, data: TableData[], options?: TableOptions) => {
+    const {callback, additionalPayload} = options ?? {}
     store.commit('setModal', {
       isOpen: true,
+      ...additionalPayload,
       content: h('table', { class: 'min-w-full border-collapse border border-gray-200' }, [
         // 테이블 헤더
         h('thead', {}, [
@@ -21,9 +32,13 @@ const useTable = () => {
           ))
         ]),
         // 테이블 바디
-        h('tbody', {}, data.map((row: any, index: number) =>
-          h('tr', { class: index % 2 === 0 ? 'bg-white' : 'bg-gray-50' }, Object.keys(tableHeaders).map(key =>
-            h('td', { class: 'px-4 py-2 border border-gray-300 text-gray-700' }, row[key])
+        h('tbody', {}, data.map((row: TableData, index: number) =>
+          h('tr', { class: index % 2 === 0 ? 'bg-white' : 'bg-gray-50' }, Object.keys(tableHeaders).map(key => {
+              return h('td', {
+                class: 'px-4 py-2 border border-gray-300 text-gray-700' + (callback?.[key] && ' hover:font-bold cursor-pointer'),
+                onClick: () => callback?.[key]?.(row, row[key])
+              }, row[key])
+            }
           ))
         ))
       ])

@@ -2,6 +2,7 @@ package com.example.demo.commute.controller;
 
 import com.example.demo.common.annotation.MeasureTime;
 import com.example.demo.commute.service.CommuteService;
+import com.example.demo.employee.dto.response.LateEmployeeDetailsDto;
 import com.example.demo.employee.dto.response.LateEmployeeResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,15 +17,6 @@ public class CommuteController {
     private final CommuteService commuteService;
 
 
-    @GetMapping("/{commuteId}")
-    public ResponseEntity<?> getOne(@PathVariable Long commuteId) {
-        return ResponseEntity.status(200).build();
-    }
-
-    @GetMapping
-    public ResponseEntity<?> getAll() {
-        return ResponseEntity.status(200).build();
-    }
 
     @PostMapping
     public ResponseEntity<?> checkIn() {
@@ -38,10 +30,19 @@ public class CommuteController {
         return ResponseEntity.status(200).body(message);
     }
 
-    @GetMapping("/late-people")
+    @GetMapping("/employees/late")
     @MeasureTime
     public ResponseEntity<?> getLateEmployees() {
         List<LateEmployeeResponseDto> data = commuteService.getLateEmployees();
+        return ResponseEntity.status(200).body(data);
+    }
+    @GetMapping("/employees/{employeeId}/late/years/{year}/months/{month}")
+    @MeasureTime
+    public ResponseEntity<?> getLateEmployee(
+            @PathVariable Long employeeId,
+            @PathVariable(required = false) Integer month,
+            @PathVariable(required = false) Integer year) {
+        List<LateEmployeeDetailsDto> data = commuteService.getLateEmployee(employeeId, year, month);
         return ResponseEntity.status(200).body(data);
     }
 
