@@ -5,7 +5,7 @@ import { VNode } from 'vue'
 
 export interface ModalModuleState {
   isOpen: boolean
-  content: (() => VNode) | null
+  content: VNode | null
   onClose: OnClose
   onConfirm: OnConfirm
   placeholder: string
@@ -105,7 +105,7 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
         if (state.modalType === 'input') {
           state.onConfirm?.(state.inputValue)
         } else if (state.modalType === 'alert') {
-          state.onConfirm?.()
+          (state.onConfirm as (() => void) | null)?.()
         }
       }
     },

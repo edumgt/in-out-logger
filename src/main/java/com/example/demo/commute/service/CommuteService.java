@@ -83,7 +83,7 @@ public class CommuteService {
                 .from(qCommute)
                 .where(qCommute.checkInTime.after(LocalTime.of(9, 0)))
                 .groupBy(qCommute.date.year(), qCommute.date.month(), qCommute.createdBy)
-                .fetch(); // TODO Projection으로 처음부터 dto로 매핑
+                .fetch(); // TODO Projection으로 처음부터 dto로 매핑 -> year, month 변환이 Expressions로 제대로 안됨
         return result.stream().map(tuple -> {
             String lateEmployeeName = tuple.get(3, String.class);
             Long lateCount = tuple.get(2, Long.class);

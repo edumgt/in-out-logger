@@ -13,6 +13,7 @@ import { dateToNumber } from '@/utils/string.ts'
 import { isAxiosError } from 'axios'
 import { messageHandler } from '@/utils/error.ts'
 import { vacation, VacationType } from '@/types/vacation.ts'
+import useTable from '@/hooks/useTable.ts'
 
 type Direction = 'asc' | 'desc'
 
@@ -20,7 +21,7 @@ interface FetchedYears {
   [key: number]: boolean;
 }
 
-const vacationType = ref<VacationType>('종일 휴가');
+const vacationType = ref<VacationType>('종일 휴가')
 const calendarRef = ref<InstanceType<typeof FullCalendar>>()
 const calendarApi = computed(() => (calendarRef.value as InstanceType<typeof FullCalendar>).getApi())
 const currentEvents = ref<EventApi[]>([])
@@ -46,20 +47,21 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
               onChange(event: any) {
                 store.commit('setIsVacation', event.target.checked)
                 if (event.target.checked) {
-                  store.commit('setPlaceholder', '연차 사유');
-                  event.target.nextSibling.classList.remove('hidden')
+                  store.commit('setPlaceholder', '연차 사유')
+                  event.target.nextSibling.classList.remove('invisible')
                 } else {
-                  store.commit('setPlaceholder', '일정명');
-                  event.target.nextSibling.classList.add('hidden')
+                  store.commit('setPlaceholder', '일정명')
+                  event.target.nextSibling.classList.add('invisible')
                 }
               }
             }
           ),
-          h('select', {'class': 'hidden py-1','id': 'vacationType',
-            onChange(event: any){
-              vacationType.value = event.target.value
-            }
-          }, Object.values(vacation).map(name => h('option', {'value': name}, name))
+          h('select', {
+              'class': 'invisible py-1', 'id': 'vacationType',
+              onChange(event: any) {
+                vacationType.value = event.target.value
+              }
+            }, Object.values(vacation).map(name => h('option', { 'value': name }, name))
           )
         ])
       ]),
@@ -68,7 +70,8 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
         h('select', {
             onChange(event: any) {
               store.commit('setSelectBoxValue', event.target.value)
-            }
+            },
+            'class': 'absolute'
           },
           selectOptions.map((option: SelectOption) =>
             h('option', { value: option }, option)
@@ -93,10 +96,10 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
           isVacation: isVacation.value,
           vacationType: vacationType.value
         })
-        if(isVacation.value){
+        if (isVacation.value) {
           store.commit('setModal', {
             isOpen: true,
-            content: h('p','휴가 신청이 완료되었습니다.')
+            content: h('p', '휴가 신청이 완료되었습니다.')
           })
         }
         const { id, start, end, title } = response.data
@@ -108,8 +111,8 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
           allDay: true,
           backgroundColor: selectBoxValue.value
         })
-      } catch(e){
-        if(isAxiosError(e)){
+      } catch (e) {
+        if (isAxiosError(e)) {
           store.commit('setModal', {
             isOpen: true,
             content: h('p', messageHandler(e))
@@ -195,8 +198,8 @@ const calendarOptions = ref<CalendarOptions>({
     axios.patch('/api/calendar/events/' + arg.event.id, {
       start: arg.event.startStr,
       end: arg.event.endStr
-    }).catch((e:any) => {
-      store.commit('setModal',{
+    }).catch((e: any) => {
+      store.commit('setModal', {
         isOpen: true,
         content: h('p', messageHandler(e)),
         onClose: () => arg.revert(),
@@ -204,7 +207,6 @@ const calendarOptions = ref<CalendarOptions>({
       })
       throw e
     })
-
 
 
   },
@@ -218,11 +220,12 @@ const calendarOptions = ref<CalendarOptions>({
     const averageTime = (startTime + endTime) / 2
     const currentDate = new Date(averageTime)
     const currentYear = currentDate.getFullYear()
-    if (currentYear < 2000) {
-      const onClose = () => calendarApi.value.gotoDate(new Date(2000, 1,1))
+    const ALLOW_YEAR = 2000
+    if (currentYear < ALLOW_YEAR) {
+      const onClose = () => calendarApi.value.gotoDate(new Date(ALLOW_YEAR, 0, 1))
       store.commit('setModal', {
         isOpen: true,
-        content: h('p', '2000년 이전 날짜는 조회 불가능합니다.'),
+        content: h('p', { 'class': 'font-bold' }, `${ALLOW_YEAR}년 이전 날짜는 조회 불가능합니다.`),
         onClose,
         onConfirm: onClose
       })
@@ -308,6 +311,15 @@ const handleCheckOut = async () => {
 const checkInProgress = useProgress(handleCheckIn)
 const checkOutProgress = useProgress(handleCheckOut)
 
+const viewAnnualLeave = async () => {
+  const tableHeaders = {
+    employeeName: '이름',
+    annualLeave: '잔여 연차'
+  }
+  const data = await axios.get('/api/employees/annual-leave').then((res: any) => res.data)
+  table(tableHeaders, data)
+}
+
 const viewCommute = async () => {
   const tableHeaders = {
     date: '날짜',
@@ -315,33 +327,17 @@ const viewCommute = async () => {
     lateCount: '지각 횟수'
   }
   const data = await axios.get('/api/commute/late-people').then((res: any) => res.data)
-  store.commit('setModal', {
-    isOpen: true,
-    content: h('table', { class: 'min-w-full border-collapse border border-gray-200' }, [
-      // 테이블 헤더
-      h('thead', {}, [
-        h('tr', { class: 'bg-gray-200' }, Object.values(tableHeaders).map(header =>
-          h('th', { class: 'px-4 py-2 border border-gray-300 text-left text-gray-600 font-medium' }, header)
-        ))
-      ]),
-      // 테이블 바디
-      h('tbody', {}, data.map((row: any, index: number) =>
-        h('tr', { class: index % 2 === 0 ? 'bg-white' : 'bg-gray-50' }, Object.keys(tableHeaders).map(key =>
-          h('td', { class: 'px-4 py-2 border border-gray-300 text-gray-700' }, row[key])
-        ))
-      ))
-    ])
-  })
+  table(tableHeaders, data)
 }
 
-
+const table = useTable()
 const store = useStore()
 
 const handleNavigateCalendar = (eventStartDate: string) => {
   calendarApi.value.gotoDate(eventStartDate)
 }
 const viewCommuteProgress = useProgress(viewCommute)
-
+const viewAnnualLeaveProgress = useProgress(viewAnnualLeave)
 </script>
 
 <template>
@@ -388,12 +384,7 @@ const viewCommuteProgress = useProgress(viewCommute)
             </div>
           </li>
           <li>
-            <div @click="() => {
-              store.commit('setModal', {
-                isOpen: true,
-                content: h('p', '아직 개발되지 않았습니다.')
-              })
-            }" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <div @click="viewAnnualLeaveProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z" />
               </svg>
