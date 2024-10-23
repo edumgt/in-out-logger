@@ -1,7 +1,6 @@
-
 <script setup lang="ts">
 import { h, reactive } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import axios from '@/utils/axios.ts'
 import { useStore } from 'vuex'
 import useProgress from '@/hooks/useProgress.ts'
@@ -9,15 +8,11 @@ import { isAxiosError } from 'axios'
 import { messageHandler } from '@/utils/error.ts'
 
 const store = useStore()
-const route = useRoute()
 const form = reactive({
   email: '',
   password: ''
 })
-const id = route.query.id
-if (id) {
-  form.email = id as string
-}
+
 const router = useRouter()
 
 const handleSubmit = async () => {
@@ -26,35 +21,39 @@ const handleSubmit = async () => {
     const { data } = response
     let token = response.headers.authorization
     if (!token.startsWith('Bearer')) {
-      store.commit('setModal',{
+      store.commit('setModal', {
         isOpen: true,
-        content: () => h('p', '로그인에 실패했습니다.'),
+        content: () => h('p', '로그인에 실패했습니다.')
       })
       return
     }
     token = token.slice(7)
     store.commit('setToken', token)
     store.commit('setUsername', data.username)
+    store.commit('setEmail', data.email)
     await router.push('/')
-  } catch (e: any){
-    if(isAxiosError(e)){
+  } catch (e: any) {
+    if (isAxiosError(e)) {
       store.commit('setModal', {
         isOpen: true,
-        content: () => h('p', messageHandler(e, '로그인에 실패했습니다.')),
+        content: () => h('p', messageHandler(e, '로그인에 실패했습니다.'))
       })
     }
     throw e
   }
 }
 const handleSubmitProgress = useProgress(handleSubmit)
-
+const handleGoogleAuth = () => {
+  const url = import.meta.env.VITE_BACKEND_URL + '/oauth2/authorization/google'
+  location.href = url
+}
 </script>
 <template>
   <div class="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-        로그인 </h2>
-    </div>
+<!--    <div class="sm:mx-auto sm:w-full sm:max-w-md">-->
+<!--      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">-->
+<!--        로그인 </h2>-->
+<!--    </div>-->
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
@@ -89,15 +88,15 @@ const handleSubmitProgress = useProgress(handleSubmit)
             </div>
             <div class="relative flex justify-center text-sm">
               <span class="px-2 bg-white text-gray-500">
-                또는 회원가입
+                또는
               </span>
             </div>
           </div>
 
-          <div class="mt-6">
-            <router-link to="/sign-up" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              회원가입
-            </router-link>
+          <div class="mt-6 justify-center flex gap-3">
+            <button @click="handleGoogleAuth">
+              <img src="@/assets/web_light_rd_ctn@1x.png" />
+            </button>
           </div>
         </div>
       </div>

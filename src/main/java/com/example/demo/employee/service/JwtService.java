@@ -1,9 +1,9 @@
 package com.example.demo.employee.service;
 
-import com.example.demo.employee.model.PrincipalDetails;
 import com.example.demo.common.constants.Token;
 import com.example.demo.common.tools.Pair;
 import com.example.demo.employee.dto.token.TokenDto;
+import com.example.demo.employee.model.PrincipalDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -42,6 +42,7 @@ public class JwtService {
                 .claim(Token.AUTHORITIES_KEY, authorities)
                 .claim("id", id)
                 .claim("name", principalDetails.getUsername())
+                .claim("email", principalDetails.employee().getEmail())
                 .setExpiration(tokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
@@ -56,6 +57,7 @@ public class JwtService {
                 .refreshToken(refreshToken)
                 .tokenExpiresIn(tokenExpiresIn.getTime())
                 .username(principalDetails.getUsername())
+                .email(principalDetails.employee().getEmail())
                 .build();
     }
     public TokenDto reissueToken(Claims claims) {

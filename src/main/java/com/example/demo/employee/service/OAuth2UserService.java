@@ -1,6 +1,6 @@
 package com.example.demo.employee.service;
 
-import com.example.demo.common.enums.LoginType;
+import com.example.demo.common.enums.JobLevel;
 import com.example.demo.employee.entity.Employee;
 import com.example.demo.employee.model.PrincipalDetails;
 import com.example.demo.employee.repository.EmployeeRepository;
@@ -21,7 +21,8 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public OAuth2UserService(EmployeeRepository userRepository,@Lazy PasswordEncoder passwordEncoder) {
+
+    public OAuth2UserService(EmployeeRepository userRepository, @Lazy PasswordEncoder passwordEncoder) {
         this.employeeRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -35,17 +36,20 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                 .getUserNameAttributeName();
         OAuth2User oAuth2User = super.loadUser(userRequest);
         Map<String, Object> attributes = oAuth2User.getAttributes();
-        Map<String, String> properties = (Map<String, String>) attributes.get("properties");
-        String username = properties.get("nickname");
-        Long id = oAuth2User.getAttribute(userNameAttributeName); // provider마다 다르므로 "id" 값 고정이여서 안됨
-        Assert.notNull(username, "cannot find username property");
+        String name = attributes.get("name").toString();
+        String email = attributes.get("email").toString();
+
+        String id = attributes.get(userNameAttributeName).toString();
+        Assert.notNull(name, "cannot find name property");
+        Assert.notNull(email, "cannot find email property");
         Assert.notNull(id, "cannot find id property");
-        String hashedPassword = passwordEncoder.encode(id.toString());
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        Employee employee = employeeRepository.findByEmail(registrationId + "$" + id).orElseGet(() -> {
-            LoginType loginType = LoginType.nameOf(registrationId);
+        String hashedPassword = passwordEncoder.encode(id);
+        Employee employee = employeeRepository.findByEmail(email).orElseGet(() -> {
+            JobLevel jobLevel = JobLevel.ADMIN_EMAILS.getOrDefault(email, JobLevel.INTERN);
             Employee newEmployee = Employee.builder()
-                    .name(username)
+                    .name(name)
+                    .email(email)
+                    .jobLevel(jobLevel)
                     .password(hashedPassword)
                     .build();
             return employeeRepository.save(newEmployee);

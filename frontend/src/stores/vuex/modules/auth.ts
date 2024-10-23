@@ -25,6 +25,11 @@ const authModule: Module<AuthModuleState, VuexModules> = {
     },
     setEmail(state, payload) {
       state.email = payload
+    },
+    logout(state){
+      state.username = ''
+      state.token = ''
+      state.email = ''
     }
   },
   getters: {

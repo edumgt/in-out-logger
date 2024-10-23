@@ -15,4 +15,5 @@ public class TokenDto {
     private String refreshToken;
     private Long tokenExpiresIn;
     private String username;
+    private String email;
 }

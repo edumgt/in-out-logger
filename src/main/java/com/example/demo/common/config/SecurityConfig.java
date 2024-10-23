@@ -43,7 +43,7 @@ public class SecurityConfig {
     private String oauth2RedirectUri;
 
     @Bean
-    public RoleHierarchy roleHierarchy(){
+    public RoleHierarchy roleHierarchy() {
         return RoleHierarchyImpl.withDefaultRolePrefix()
                 .role("CEO").implies("HEAD")
                 .role("HEAD").implies("SENIOR_MANAGER")
@@ -65,6 +65,7 @@ public class SecurityConfig {
     public Key key(@Value("${jwt.secret}") String secretKey) {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
         http.cors(AbstractHttpConfigurer::disable)
@@ -108,7 +109,10 @@ public class SecurityConfig {
     @Bean
     @DependsOn("secretConfig")
     public ClientRegistrationRepository clientRegistrationRepository(SecretConfig secretConfig) {
-        return new InMemoryClientRegistrationRepository(kakaoClientRegistration(secretConfig.getOauth2()));
+        return new InMemoryClientRegistrationRepository(
+                kakaoClientRegistration(secretConfig.getOauth2()),
+                googleClientRegistration(secretConfig.getOauth2())
+        );
     }
 
     private ClientRegistration kakaoClientRegistration(SecretConfig.OAuth2 oAuth2) {
@@ -123,6 +127,21 @@ public class SecurityConfig {
                 .redirectUri(oauth2RedirectUri)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .scope("profile_nickname")
+                .build();
+    }
+
+    private ClientRegistration googleClientRegistration(SecretConfig.OAuth2 oAuth2) {
+        return ClientRegistration.withRegistrationId("google")
+                .clientId(oAuth2.getGoogleClient().getClientId())
+                .clientSecret(oAuth2.getGoogleClient().getClientSecret())
+                .authorizationUri("https://accounts.google.com/o/oauth2/v2/auth")
+                .tokenUri("https://oauth2.googleapis.com/token")
+                .userInfoUri("https://www.googleapis.com/oauth2/v3/userinfo")
+                .userNameAttributeName("sub")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .redirectUri(oauth2RedirectUri)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .scope("profile", "email")
                 .build();
     }
 }

@@ -232,20 +232,23 @@ const calendarOptions = ref<CalendarOptions>({
       store.commit('setIsLoading', false)
       return
     }
-    const events = await fetchEvents(currentYear)
-    if (events) {
-      for (const { id, title, start, end, backgroundColor } of events) {
-        calendarApi.value.addEvent({
-          id,
-          title,
-          start,
-          end,
-          allDay: true,
-          backgroundColor
-        })
+    try {
+      const events = await fetchEvents(currentYear)
+      if (events) {
+        for (const { id, title, start, end, backgroundColor } of events) {
+          calendarApi.value.addEvent({
+            id,
+            title,
+            start,
+            end,
+            allDay: true,
+            backgroundColor
+          })
+        }
       }
+    } finally {
+      store.commit('setIsLoading', false)
     }
-    store.commit('setIsLoading', false)
   }
 })
 const fetchEvents = async (year: number) => {

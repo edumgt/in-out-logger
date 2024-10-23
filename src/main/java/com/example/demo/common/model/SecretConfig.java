@@ -24,14 +24,11 @@ public class SecretConfig {
     public static class OAuth2 {
         @JsonProperty("kakao")
         private KakaoClient kakaoClient;
+        @JsonProperty("google")
+        private GoogleClient googleClient;
 
         public static class KakaoClient extends ClientSecret{}
+        public static class GoogleClient extends ClientSecret{}
     }
-    private ApiKey apiKey;
 
-    @Getter
-    @Setter
-    public static class ApiKey {
-        private String govData;
-    }
 }
