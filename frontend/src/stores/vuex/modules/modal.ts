@@ -14,7 +14,9 @@ export interface ModalModuleState {
   inputValue: InputValue
   modalType: ModalType
   selectBoxValue: SelectOption
-  isVacation: boolean
+  isVacation: boolean,
+  inputHandler: InputHandler
+  disableConfirm: boolean
 }
 
 
@@ -23,6 +25,7 @@ export type SelectOption = ElementType<typeof selectOptions>
 export type InputValue = string
 export type OnConfirm = (() => void) | ((inputValue: InputValue) => void) | null
 export type OnClose = (() => void) | null
+export type InputHandler = ((input, prevInput) => string) | null
 
 export const modalTypes = ['alert', 'input'] as const
 
@@ -42,7 +45,9 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       selectBoxValue: 'green',
       isVacation: false,
       closeText: '닫기',
-      confirmText: '확인'
+      confirmText: '확인',
+      inputHandler: null,
+      disableConfirm: false
     }
   },
   actions: {},
@@ -58,7 +63,9 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       selectBoxValue,
       isVacation,
       confirmText,
-      closeText
+      closeText,
+      disableConfirm,
+      inputHandler
     }: ModalModuleState) {
       state.content = content ?? null
       state.isOpen = isOpen ?? false
@@ -71,9 +78,16 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
       state.isVacation = isVacation ?? false
       state.confirmText = confirmText ?? '확인'
       state.closeText = closeText ?? '닫기'
+      state.inputHandler = inputHandler ?? null
+      state.disableConfirm = disableConfirm ?? false
     },
     setInputValue(state, payload) {
-      state.inputValue = payload
+      if(state.inputHandler) {
+        const newInputValue = state.inputHandler(payload, state.inputValue)
+        state.inputValue = newInputValue
+      } else {
+        state.inputValue = payload
+      }
     },
     setSelectBoxValue(state, payload) {
       state.selectBoxValue = payload
@@ -81,8 +95,11 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
     setIsVacation(state, payload) {
       state.isVacation = payload
     },
-    setPlaceholder(state, payload){
+    setPlaceholder(state, payload) {
       state.placeholder = payload
+    },
+    setDisableConfirm(state, payload){
+      state.disableConfirm = payload
     }
   },
   getters: {
@@ -120,14 +137,17 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
     getSelectBoxValue(state) {
       return state.selectBoxValue
     },
-    isVacation(state){
+    isVacation(state) {
       return state.isVacation
     },
-    getConfirmText(state){
+    getConfirmText(state) {
       return state.confirmText
     },
-    getCloseText(state){
+    getCloseText(state) {
       return state.closeText
+    },
+    getDisableConfirm(state) {
+      return state.disableConfirm
     }
   }
 }

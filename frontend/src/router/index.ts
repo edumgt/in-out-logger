@@ -21,7 +21,7 @@ const routes: Array<RouteRecordRaw> = [
       requiresAuth: true
     },
     component: CalendarPage
-  }
+  },
 ]
 
 const router = createRouter({

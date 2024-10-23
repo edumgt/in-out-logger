@@ -37,7 +37,7 @@ public class AuthService {
                 .id(Long.parseLong(id))
                 .email(subject)
                 .name(name)
-                .jobLevel(JobLevel.nameOf(role))
+                .jobLevel(JobLevel.of(role))
                 .build();
         UserDetails principal = new PrincipalDetails(employee); // PrincipalDetails(UserDetails)에 User
 

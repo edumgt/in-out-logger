@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @Service
@@ -38,7 +37,7 @@ public class CalendarService {
         Vacation vacation = null;
         if (calendarEventDto.getIsVacation()) { // 휴가라면
             // 휴가라면 휴가 타입과 사용자명 추가
-            VacationType vacationType = VacationType.descriptionOf(calendarEventDto.getVacationType());
+            VacationType vacationType = VacationType.of(calendarEventDto.getVacationType());
             if (vacationType == null) {
                 throw new HttpException(400, "잘못된 요청입니다.");
             }
@@ -50,7 +49,7 @@ public class CalendarService {
                 }
             }
             vacation = vacationService.vacationRequest(calendarEventDto, vacationType, currentUser); // 휴가 요청 생성
-            calendarEventDto.setTitle("%s (%s)".formatted(vacationType.getDescription(), currentUser.getName()));
+            calendarEventDto.setTitle("%s (%s)".formatted(vacationType.getValue(), currentUser.getName()));
         } else { // 휴가가 아니라면 일정에 사용자명 추가
             calendarEventDto.setTitle("%s (%s)".formatted(calendarEventDto.getTitle(), currentUser.getName()));
         }
@@ -65,12 +64,9 @@ public class CalendarService {
     }
 
     public void deleteEvent(Long eventId) {
-        Employee employee = SecurityUtils.getCurrentUser();
         CalendarEvent calendarEvent = calendarEventRepository.findById(eventId)
                 .orElseThrow(() -> new HttpException(HttpStatus.BAD_REQUEST, "이미 삭제된 이벤트입니다."));
-        if (!Objects.equals(employee.getId(), calendarEvent.getCreatedBy().getId())) {
-            throw new HttpException(HttpStatus.FORBIDDEN, "권한이 없습니다.");
-        }
+        SecurityUtils.checkPermission(calendarEvent.getCreatedBy().getId());
         Vacation vacation = calendarEvent.getVacation();
         if(vacation != null){
             Employee requester = vacation.getCreatedBy();
@@ -92,12 +88,9 @@ public class CalendarService {
     }
 
     public void changeEventDate(Long eventId, ChangeEventDateRequestDto changeEventDateRequestDto) {
-        Employee currentUser = SecurityUtils.getCurrentUser();
         CalendarEvent calendarEvent = calendarEventRepository.findById(eventId)
                 .orElseThrow(() -> new HttpException(400, "잘못된 요청입니다."));
-        if (!Objects.equals(currentUser.getId(), calendarEvent.getCreatedBy().getId())) {
-            throw new HttpException(403, "권한이 없습니다.");
-        }
+        SecurityUtils.checkPermission(calendarEvent.getCreatedBy().getId());
         calendarEvent.setStart(changeEventDateRequestDto.getStart());
         calendarEvent.setEnd(changeEventDateRequestDto.getEnd());
 

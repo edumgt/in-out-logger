@@ -10,10 +10,12 @@ import { useStore } from 'vuex'
 import { InputValue, SelectOption, selectOptions } from '@/stores/vuex/modules/modal.ts'
 import { CalendarOptions, DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
 import { dateToNumber } from '@/utils/string.ts'
-import { AxiosResponse, isAxiosError } from 'axios'
+import { AxiosError, AxiosResponse, isAxiosError } from 'axios'
 import { messageHandler } from '@/utils/error.ts'
 import { vacation, VacationType } from '@/types/vacation.ts'
-import useTable, { TableData } from '@/hooks/useTable.ts'
+import useTable, { TableHeaders } from '@/hooks/useTable.ts'
+import regex from '@/utils/regex.ts'
+import { jobLevels } from '@/utils/auth.ts'
 
 type Direction = 'asc' | 'desc'
 
@@ -305,50 +307,245 @@ const handleCheckOut = async () => {
 const checkInProgress = useProgress(handleCheckIn)
 const checkOutProgress = useProgress(handleCheckOut)
 
-
-
-const viewAnnualLeave = async () => {
-  const tableHeaders = {
-    employeeName: '이름',
-    annualLeave: '잔여 연차'
-  }
-  const data = await axios.get('/api/employees/annual-leave').then((res: AxiosResponse) => res.data)
-  table(tableHeaders, data, {
-    onCellClick: {
-      // 여기에 tableHeaders로 입력한 객체의 key가 자동완성으로 떠야하는데 뜨질 않음
-    }
-  })
+const annualLeaveTableHeader: TableHeaders = {
+  employeeName: '이름',
+  annualLeave: '잔여 연차'
 }
-
-const viewCommute = async () => {
-  const tableHeaders = {
-    date: '날짜',
-    lateEmployeeName: '이름',
-    lateCount: '지각 횟수'
+const viewAnnualLeave = async () => {
+  const handleCellClick = (message, inputHandler) => {
+    return async (rowData, cell) => {
+      store.commit('setModal', {
+        isOpen: true,
+        modalType: 'input',
+        content: h('p', message),
+        placeholder: annualLeaveTableHeader[cell.name],
+        inputValue: rowData[cell.name],
+        onConfirm: async (input) => {
+          const message = await axios.patch(`/api/employees/${rowData.id}`, {
+            [cell.name]: input
+          }).then((res: AxiosResponse) => res.data)
+            .catch((e: AxiosError) => e.response?.data)
+          store.commit('setModal', {
+            isOpen: true,
+            content: h('p', message),
+            onClose: setEmployeeTable,
+            closeText: '뒤로'
+          })
+        },
+        onClose: setEmployeeTable,
+        closeText: '뒤로',
+        inputHandler
+      })
+    }
   }
-  const lateEmployeesData = await axios.get('/api/commute/employees/late').then((res: AxiosResponse) => res.data)
-  const setTable = () => {
-    table(tableHeaders, lateEmployeesData, {
-      onRowClick: async (rowData: TableData) => {
-        const detailTableHeaders = {
-          date: '날짜',
-          employeeName: '이름',
-          checkInTime: '출근',
-          checkOutTime: '퇴근'
-        }
-        const { employeeId, date } = rowData
-        const [year, month, _day] = date.split('-')
-        const detailData = await axios.get(`/api/commute/employees/${employeeId}/late/years/${year}/months/${month}`).then((res: AxiosResponse) => res.data)
-        table(detailTableHeaders, detailData, {
-          additionalPayload: {
-            closeText: '뒤로',
-            onClose: setTable
+  const setEmployeeTable = async () => {
+    const detailData = await axios.get('/api/employees').then((res: AxiosResponse) => res.data)
+    table(employeeDetailsHeader, detailData, {
+      additionalPayload: {
+        closeText: '뒤로',
+        onClose: setAnnualLeaveTable
+      },
+      onCellClick: {
+        phoneNumber: handleCellClick('핸드폰 번호를 입력해주세요.', (input, prev) => {
+          input = input.replace(/[^0-9]/g, '').replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, "$1-$2-$3").replace(/(\-{1,2})$/g, "");
+          if (regex.phoneNumber.test(input)) {
+            store.commit('setDisableConfirm', false)
+            return input
           }
-        }) // end of inner table
+          store.commit('setDisableConfirm', true)
+          return prev
+        }),
+        hireDate: handleCellClick('yyyy-MM-dd 형식으로 입력해주세요.', (input, prev) => {
+          if (regex.yyyyMMdd.test(input)) {
+            store.commit('setDisableConfirm', false)
+            return input
+          }
+          store.commit('setDisableConfirm', true)
+          return prev
+        }),
+        jobLevel: handleCellClick('1 ~ 8 숫자 입력 바랍니다.', (input, prev) => {
+          if (input.length > 1) {
+            input = input.slice(-1)
+          }
+          const number = Number(input)
+          if (!isNaN(number)) {
+            if (number >= 1 && number <= jobLevels.length) {
+              store.commit('setDisableConfirm', false)
+              return jobLevels[number - 1]
+            }
+          }
+          store.commit('setDisableConfirm', true)
+          return prev
+        }),
+        address: handleCellClick('주소를 입력해주세요.'),
+        annualLeave: handleCellClick('연차 갯수를 입력해주세요.', (input, prev) => {
+          const number = Number(input)
+          if (!isNaN(number)) {
+            return number
+          }
+          return prev
+        }),
+        department: handleCellClick('부서를 입력해주세요.')
+      } // end of cellClick
+    })
+  }
+
+
+  const data = await axios.get('/api/employees/annual-leave').then((res: AxiosResponse) => res.data)
+  const annualLeaveDetailsHeader = {
+    start: '시작일',
+    end: '종료일',
+    reason: '사유',
+    vacationType: '분류',
+    vacationStatus: '상태',
+    approvedAt: '승인일자',
+    approvedBy: '승인자'
+  }
+  const setAnnualLeaveTable = () => {
+    table(annualLeaveTableHeader, data, {
+      onCellClick: {
+        employeeName: setEmployeeTable,
+        annualLeave: async (rowData, cell) => {
+          const annualLeaveDetails = await axios.get(`/api/employees/${rowData.employeeId}/annual-leave`).then((res: AxiosResponse) => res.data)
+          table(annualLeaveDetailsHeader, annualLeaveDetails, {
+            additionalPayload: {
+              onClose: setAnnualLeaveTable,
+              closeText: '뒤로'
+            }
+          })
+        }
+      }
+    })
+  }
+  setAnnualLeaveTable()
+}
+const lateEmployeeTableHeader: TableHeaders = {
+  date: '날짜',
+  lateEmployeeName: '이름',
+  lateCount: '지각 횟수'
+}
+const employeeDetailsHeader: TableHeaders = {
+  name: '이름',
+  phoneNumber: '핸드폰 번호',
+  hireDate: '입사 일자',
+  jobLevel: '직급',
+  address: '주소',
+  annualLeave: '잔여 연차',
+  department: '부서'
+}
+const lateDetailsHeader: TableHeaders = {
+  date: '날짜',
+  employeeName: '이름',
+  checkInTime: '출근',
+  checkOutTime: '퇴근'
+}
+// 출근 조회
+const viewCommute = async () => {
+
+  // 셀 클릭
+  const handleCellClick = (message, inputHandler) => {
+    return async (rowData, cell) => {
+      store.commit('setModal', {
+        isOpen: true,
+        modalType: 'input',
+        content: h('p', message),
+        placeholder: employeeDetailsHeader[cell.name],
+        inputValue: rowData[cell.name],
+        onConfirm: async (input) => {
+          const message = await axios.patch(`/api/employees/${rowData.id}`, {
+            [cell.name]: input
+          }).then((res: AxiosResponse) => res.data)
+            .catch((e: AxiosError) => e.response?.data)
+          store.commit('setModal', { // 결과 모달 핸들링
+            isOpen: true,
+            content: h('p', message),
+            onClose: setEmployeeTable,
+            closeText: '뒤로'
+          })
+        },
+        onClose: setEmployeeTable,
+        closeText: '뒤로',
+        inputHandler
+      })
+    }
+  }
+  const commuteData = await axios.get('/api/commute/employees/late').then((res: AxiosResponse) => res.data)
+
+  // 사원 정보 테이블 렌더
+  const setEmployeeTable = async () => {
+    const detailData = await axios.get('/api/employees').then((res: AxiosResponse) => res.data)
+    table(employeeDetailsHeader, detailData, {
+      additionalPayload: {
+        closeText: '뒤로',
+        onClose: setCommuteTable
+      },
+      onCellClick: {
+        phoneNumber: handleCellClick('핸드폰 번호를 입력해주세요.', (input, prev) => {
+          input = input.replace(/[^0-9]/g, '').replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, "$1-$2-$3").replace(/(\-{1,2})$/g, "");
+          if (regex.phoneNumber.test(input)) {
+            store.commit('setDisableConfirm', false)
+            return input
+          }
+          store.commit('setDisableConfirm', true)
+          return prev
+        }),
+        hireDate: handleCellClick('yyyy-MM-dd 형식으로 입력해주세요.', (input, prev) => {
+          if (regex.yyyyMMdd.test(input)) {
+            store.commit('setDisableConfirm', false)
+            return input
+          }
+          store.commit('setDisableConfirm', true)
+          return prev
+        }),
+        jobLevel: handleCellClick('1 ~ 8 숫자 입력 바랍니다.', (input, prev) => {
+          if (input.length > 1) {
+            input = input.slice(-1)
+          }
+          const number = Number(input)
+          if (!isNaN(number)) {
+            if (number >= 1 && number <= jobLevels.length) {
+              store.commit('setDisableConfirm', false)
+              return jobLevels[number - 1]
+            }
+          }
+          store.commit('setDisableConfirm', true)
+          return prev
+        }),
+        address: handleCellClick('주소를 입력해주세요.'),
+        annualLeave: handleCellClick('연차 갯수를 입력해주세요.', (input, prev) => {
+          const number = Number(input)
+          if (!isNaN(number)) {
+            return number
+          }
+          return prev
+        }),
+        department: handleCellClick('부서를 입력해주세요.')
+      } // end of cellClick
+    })
+  }
+  const setCommuteTable = () => {
+    table<typeof lateEmployeeTableHeader>(lateEmployeeTableHeader, commuteData, {
+      onCellClick: {
+        lateEmployeeName: setEmployeeTable,
+        date: (rowData) => {
+          calendarApi.value.gotoDate(rowData.date)
+          store.getters.handleModalClose()
+        },
+        lateCount: async (rowData) => {
+          const { employeeId, date } = rowData
+          const [year, month, _day] = date.split('-')
+          const detailData = await axios.get(`/api/commute/employees/${employeeId}/late/years/${year}/months/${month}`).then((res: AxiosResponse) => res.data)
+          table(lateDetailsHeader, detailData, {
+            additionalPayload: {
+              closeText: '뒤로',
+              onClose: setCommuteTable
+            }
+          }) // end of inner table
+        } // end of callback
       }
     }) // end of outer table
   }
-  setTable()
+  setCommuteTable()
 
 }
 

@@ -12,4 +12,5 @@ import lombok.Setter;
 public class AnnualLeaveResponseDto {
     private String employeeName;
     private Double annualLeave;
+    private Long employeeId;
 }

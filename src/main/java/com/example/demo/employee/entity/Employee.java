@@ -4,6 +4,7 @@ import com.example.demo.common.entity.CommonProperties;
 import com.example.demo.common.enums.EmploymentStatus;
 import com.example.demo.common.enums.JobLevel;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,7 +24,7 @@ public class Employee extends CommonProperties {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(columnDefinition = "VARCHAR(30)", nullable = false)
-    @Comment("성함")
+    @Comment("이름")
     private String name;
     @Column(unique = true, columnDefinition = "VARCHAR(50)")
     @Comment("이메일")
@@ -49,7 +50,9 @@ public class Employee extends CommonProperties {
     private EmploymentStatus employmentStatus;
     @Column(columnDefinition = "DOUBLE default 0")
     @Comment("잔여 연차")
-    private Double annualLeave;
-//    @Column(columnDefinition = "VARCHAR(50)")
-//    private String department; // 부서
+    @Builder.Default
+    private Double annualLeave = 0D;
+    @Column(columnDefinition = "VARCHAR(50)")
+    @Comment("부서")
+    private String department; // 부서
 }

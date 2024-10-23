@@ -1,5 +1,6 @@
 package com.example.demo.calendar.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -17,16 +18,17 @@ public enum VacationType {
     UNPAID_LEAVE("무급 휴가"),
     SPECIAL_LEAVE("특별 휴가");
 
-    private final String description;
+    @JsonValue
+    private final String value;
     private static final Set<VacationType> HALF_HOLDER = Set.of(VacationType.MORNING_HALF_DAY, VacationType.AFTERNOON_HALF_DAY);
     private static final Map<String, VacationType> CONVERTER = new HashMap<>();
     static {
         for(VacationType vacationType : values()) {
-            CONVERTER.put(vacationType.getDescription(), vacationType);
+            CONVERTER.put(vacationType.getValue(), vacationType);
         }
     }
-    public static VacationType descriptionOf(String description) {
-        return CONVERTER.get(description);
+    public static VacationType of(String value) {
+        return CONVERTER.get(value);
     }
     public static boolean isHalf(VacationType vacationType) {
         return HALF_HOLDER.contains(vacationType);

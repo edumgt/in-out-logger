@@ -19,4 +19,8 @@ public interface VacationRepository extends JpaRepository<Vacation, Long> {
     List<Vacation> findOverlappingVacations(@Param("createdBy") Employee createdBy,
                                             @Param("start") LocalDate start,
                                             @Param("end") LocalDate end);
+
+
+    List<Vacation> findAllById(Long employeeId);
+
 }

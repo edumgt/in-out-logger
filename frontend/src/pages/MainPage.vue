@@ -15,7 +15,6 @@ if (queryToken && queryUsername && queryEmail) {
 }
 
 const username = computed(() => store.getters.getUsername)
-
 const logout = () => {
   store.commit('logout')
   router.replace('/')
