@@ -68,15 +68,13 @@ public class CalendarService {
                 .orElseThrow(() -> new HttpException(HttpStatus.BAD_REQUEST, "이미 삭제된 이벤트입니다."));
         SecurityUtils.checkPermission(calendarEvent.getCreatedBy().getId());
         Vacation vacation = calendarEvent.getVacation();
-        if(vacation != null){
+        if(vacation != null && !VacationType.isFree(vacation.getVacationType())){
             Employee requester = vacation.getCreatedBy();
-//            if (!Objects.equals(employee.getId(), requester.getId())) { // 본인이 삭제해도 연차갯수는 안늘어나게
             double dateDiff = ChronoUnit.DAYS.between(vacation.getStart(), vacation.getEnd()) + 1;
             if(VacationType.isHalf(vacation.getVacationType())){
                 dateDiff -= 0.5;
             }
             employeeRepository.increaseAnnualLeave(requester.getId(), dateDiff);
-//            }
         }
         calendarEventRepository.delete(calendarEvent);
     }

@@ -9,6 +9,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 
+/**
+ * 프리티어에는 redis까지 올리기엔 너무 무거워서 주석처리, 액세스 토큰 유효시간 길게 설정
+ */
+
 @Service
 public class RedisService {
     private final RedisTemplate<String, String> redisTemplate;

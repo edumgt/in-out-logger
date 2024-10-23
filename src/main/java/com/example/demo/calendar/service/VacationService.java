@@ -56,11 +56,13 @@ public class VacationService {
                 .vacationStatus(VacationStatus.PENDING)
                 .build();
 
-        double dateDiff = ChronoUnit.DAYS.between(start, end) + 1;
-        if (VacationType.isHalf(vacationType)) {
-            dateDiff -= 0.5;
+        if(!VacationType.isFree(vacationType)){
+            double dateDiff = ChronoUnit.DAYS.between(start, end) + 1;
+            if (VacationType.isHalf(vacationType)) {
+                dateDiff -= 0.5;
+            }
+            employeeRepository.decreaseAnnualLeave(requester.getId(), dateDiff);
         }
-        employeeRepository.decreaseAnnualLeave(requester.getId(), dateDiff);
         return vacationRepository.save(vacation);
     }
 

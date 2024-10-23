@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
 @Getter
 @RequiredArgsConstructor
 public enum JobLevel {
@@ -23,24 +24,27 @@ public enum JobLevel {
 
 
     public static final String ROLE_PREFIX = "ROLE_";
-    public static final Set<JobLevel> ADMIN_LEVEL = Set.of(JobLevel.CEO, JobLevel.HEAD);
+    public static final Set<JobLevel> ADMIN_LEVEL = Set.of(CEO, HEAD);
     public static final Map<String, JobLevel> ADMIN_EMAILS = Map.of(
             "jenkis@jeit.co.kr", JobLevel.CEO,
             "gm@jeit.co.kr", JobLevel.HEAD
     );
     private static final Map<String, JobLevel> CONVERTER = new HashMap<>();
+
     static {
-        for(JobLevel jobLevel : values()) {
-            CONVERTER.put(ROLE_PREFIX + jobLevel.name() , jobLevel);
+        for (JobLevel jobLevel : values()) {
+            CONVERTER.put(ROLE_PREFIX + jobLevel.name(), jobLevel);
         }
     }
+
     public static JobLevel of(String name) {
-        if(name.startsWith(ROLE_PREFIX)) {
+        if (name.startsWith(ROLE_PREFIX)) {
             return CONVERTER.get(name.toUpperCase());
         }
         return CONVERTER.get(ROLE_PREFIX + name.toUpperCase());
     }
+
     public static String getRole(JobLevel jobLevel) {
-        return ROLE_PREFIX  + jobLevel.name();
+        return ROLE_PREFIX + jobLevel.name();
     }
 }
