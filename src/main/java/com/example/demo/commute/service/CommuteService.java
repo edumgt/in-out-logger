@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,31 +43,33 @@ public class CommuteService {
     }
 
     public String checkIn() {
+        LocalTime checkInTime = LocalTime.now();
         Employee employee = SecurityUtils.getCurrentUser();
         Optional<Commute> optionalCommute = commuteRepository.findByCreatedByAndDate(employee, LocalDate.now());
-        Commute commute;
         boolean checkInLogExists = optionalCommute.isPresent();
         if (checkInLogExists) {
-            commute = optionalCommute.get();
-            commute.setCheckInTime(LocalTime.now());
-        } else {
-            commute = Commute.builder()
-                    .date(LocalDate.now())
-                    .checkInTime(LocalTime.now())
-                    .build();
+            throw new HttpException(400, "이미 출근처리 되었습니다.");
         }
+        Commute commute = Commute.builder()
+                .date(LocalDate.now())
+                .checkInTime(checkInTime)
+                .build();
         commuteRepository.save(commute);
-        return checkInLogExists ? "출근 처리 갱신되었습니다" : "출근 처리 되었습니다.";
+        return checkInTime.format(DateTimeFormatter.ofPattern("HH시 mm분 출근처리 되었습니다."));
     }
 
     public String checkOut() {
+        LocalTime checkOutTime = LocalTime.now();
         Employee employee = SecurityUtils.getCurrentUser();
         Commute commute = commuteRepository.findByCreatedByAndDate(employee, LocalDate.now())
                 .orElseThrow(() -> new HttpException(HttpStatus.BAD_REQUEST, "오늘 출근하지 않았습니다."));
         boolean checkOutLogExists = commute.getCheckOutTime() != null;
-        commute.setCheckOutTime(LocalTime.now());
+        if(checkOutLogExists){
+            throw new HttpException(400, "이미 퇴근처리 되었습니다.");
+        }
+        commute.setCheckOutTime(checkOutTime);
         commuteRepository.save(commute);
-        return checkOutLogExists ? "퇴근 처리 갱신되었습니다." : "퇴근 처리 되었습니다.";
+        return checkOutTime.format(DateTimeFormatter.ofPattern("HH시 mm분 퇴근처리 되었습니다. 고생하셨습니다."));
     }
 
     /**
@@ -97,6 +100,7 @@ public class CommuteService {
             return new LateEmployeeResponseDto(lateEmployeeName, lateCount, date, employeeId);
         }).toList();
     }
+
     @Transactional(readOnly = true)
     public List<LateEmployeeDetailsDto> getLateEmployee(Long employeeId, Integer year, Integer month) {
         validateDateParameters(year, month);
@@ -113,7 +117,7 @@ public class CommuteService {
 //        }
 //        builder.and(qCommute.checkInTime.after(LATE_THRESHOLD));
         List<LateEmployeeDetailsDto> result = jpaQueryFactory.select(
-                Projections.constructor(LateEmployeeDetailsDto.class,
+                        Projections.constructor(LateEmployeeDetailsDto.class,
                                 qCommute.createdBy.name,
                                 qCommute.date,
                                 qCommute.checkInTime,
@@ -129,11 +133,13 @@ public class CommuteService {
                 .fetch();
         return result;
     }
+
     private void validateDateParameters(Integer year, Integer month) {
         if (year == null && month != null) {
             throw new HttpException(400, "년도 없이 월 값만 지정할 수 없습니다.");
         }
     }
+
     private BooleanExpression employeeIdEquals(QCommute qCommute, Long employeeId) {
         return employeeId != null ? qCommute.createdBy.id.eq(employeeId) : null;
     }

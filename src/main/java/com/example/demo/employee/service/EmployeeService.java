@@ -45,14 +45,14 @@ public class EmployeeService {
             Employee currentUser = SecurityUtils.getCurrentUser();
             if(!SecurityUtils.isAdmin(currentUser)){ // 관리자가 아닐 경우
                 throw new HttpException(403, "권한이 없습니다.");
-            } else if(Objects.equals(employeeId, employeeDto.getId())){ // 관리자인데 자기 자신의 권한을 바꾸려고 하는 경우
-
+            } else if(Objects.equals(employeeId, employeeDto.getId())){
+                // TODO 관리자인데 자기 자신의 권한을 바꾸려고 하는 경우
             }
         } else {
             SecurityUtils.checkPermission(employeeId);
         }
         Employee targetEmployee  = employeeRepository.findById(employeeId).orElseThrow(() -> new HttpException(400, "잘못된 요청입니다."));
-        String[] ignoreProperties = ReflectionUtils.getNullishFields(employeeDto);
+        String[] ignoreProperties = ReflectionUtils.getNullFields(employeeDto);
         BeanUtils.copyProperties(employeeDto, targetEmployee, ignoreProperties);
         employeeRepository.save(targetEmployee);
     }

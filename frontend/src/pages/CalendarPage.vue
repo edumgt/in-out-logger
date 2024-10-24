@@ -7,7 +7,7 @@ import { computed, h, onMounted, onUnmounted, ref } from 'vue'
 import axios from '@/utils/axios.ts'
 import useProgress from '@/hooks/useProgress.ts'
 import { useStore } from 'vuex'
-import { InputValue, SelectOption, selectOptions } from '@/stores/vuex/modules/modal.ts'
+import { InputHandler, InputValue, SelectOption, selectOptions } from '@/stores/vuex/modules/modal.ts'
 import { CalendarOptions, DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
 import { dateToNumber } from '@/utils/string.ts'
 import { AxiosError, AxiosResponse, isAxiosError } from 'axios'
@@ -276,10 +276,17 @@ onUnmounted(() => {
 
 const handleCheckIn = async () => {
   try {
-    const message = await axios.post('/api/commute').then((res: AxiosResponse) => res.data).catch((e) => e.response.data)
     store.commit('setModal', {
       isOpen: true,
-      content: h('p', message)
+      content: h('p', '출근처리 할까요?'),
+      confirmText: '출근',
+      onConfirm: async () => {
+        const message = await axios.post('/api/commute').then((res: AxiosResponse) => res.data).catch((e: AxiosError) => e.response.data)
+        store.commit('setModal', {
+            isOpen: true,
+            content: h('p', message)
+        })
+      }
     })
   } catch (e: any) {
     store.commit('setModal', {
@@ -291,10 +298,17 @@ const handleCheckIn = async () => {
 }
 const handleCheckOut = async () => {
   try {
-    const response = await axios.patch('/api/commute')
     store.commit('setModal', {
       isOpen: true,
-      content: h('p', response.data)
+      content: h('p', '퇴근처리 할까요?'),
+      confirmText: '퇴근',
+      onConfirm: async () => {
+        const message = await axios.patch('/api/commute').then((res: AxiosResponse) => res.data).catch((e: AxiosError) => e.response.data)
+        store.commit('setModal', {
+          isOpen: true,
+          content: h('p', message)
+        })
+      }
     })
   } catch (e: any) {
     store.commit('setModal', {
@@ -443,7 +457,7 @@ const lateDetailsHeader: TableHeaders = {
 const viewCommute = async () => {
 
   // 셀 클릭
-  const handleCellClick = (message, inputHandler) => {
+  const handleCellClick = (message: string, inputHandler?: InputHandler) => {
     return async (rowData, cell) => {
       store.commit('setModal', {
         isOpen: true,
@@ -451,7 +465,7 @@ const viewCommute = async () => {
         content: h('p', message),
         placeholder: employeeDetailsHeader[cell.name],
         inputValue: rowData[cell.name],
-        onConfirm: async (input) => {
+        onConfirm: async (input: string) => {
           const message = await axios.patch(`/api/employees/${rowData.id}`, {
             [cell.name]: input
           }).then((res: AxiosResponse) => res.data)

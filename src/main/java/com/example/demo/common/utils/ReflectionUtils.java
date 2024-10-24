@@ -39,21 +39,17 @@ public class ReflectionUtils {
         return fieldMap;
     }
     @SneakyThrows
-    public String[] getNullishFields(Object instance) {
-        List<String> nullishFields = new ArrayList<>();
+    public String[] getNullFields(Object instance) {
+        List<String> nullFields = new ArrayList<>();
         List<Field> fields = getAllFields(instance.getClass());
         for (Field field : fields) {
             field.setAccessible(true);
             Object value = field.get(instance);
-            if(value instanceof Number numValue){
-                if(numValue.intValue() == 0){
-                    nullishFields.add(field.getName());
-                }
-            } else if(value == null){
-                nullishFields.add(field.getName());
+            if(value == null){
+                nullFields.add(field.getName());
             }
         }
-        return nullishFields.toArray(String[]::new);
+        return nullFields.toArray(String[]::new);
     }
 
     @SneakyThrows

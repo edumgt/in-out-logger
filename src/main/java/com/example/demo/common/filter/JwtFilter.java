@@ -37,7 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
             Pair<Boolean, Claims> accessTokenPair = jwtService.validateToken(accessToken);
             if (accessTokenPair.getFirst()) {  // 액세스토큰 검사
                 authService.setAuthentication(accessToken);
-            } else {
+            } else { // 액세스토큰 만료
                 String clientIp = HttpUtils.getClientIp();
                 String refreshToken = redisService.get(Redis.TOKEN_PREFIX + clientIp + accessToken, String.class);
                 if (StringUtils.hasText(refreshToken)) { // 레디스에서 리프레시 토큰 조회
