@@ -248,6 +248,8 @@ const calendarOptions = ref<CalendarOptions>({
           })
         }
       }
+      const holidays = await axios.get(`/api/calendar/events/holiday/years/${currentYear}`)
+      console.log(holidays.response.data)
     } finally {
       store.commit('setIsLoading', false)
     }

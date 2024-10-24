@@ -10,6 +10,8 @@ import com.example.demo.calendar.enums.VacationType;
 import com.example.demo.calendar.mapper.CalendarMapper;
 import com.example.demo.calendar.repository.CalendarEventRepository;
 import com.example.demo.common.exception.HttpException;
+import com.example.demo.common.httpclient.holiday.exchanger.HolidayExchanger;
+import com.example.demo.common.httpclient.holiday.model.HolidayResponse;
 import com.example.demo.common.utils.SecurityUtils;
 import com.example.demo.employee.entity.Employee;
 import com.example.demo.employee.repository.EmployeeRepository;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -32,6 +35,7 @@ public class CalendarService {
     private final CalendarEventRepository calendarEventRepository;
     private final VacationService vacationService;
     private final EmployeeRepository employeeRepository;
+    private final HolidayExchanger holidayExchanger;
 
     public CalendarEventDto createEvent(CalendarEventDto calendarEventDto) {
         Employee currentUser = SecurityUtils.getCurrentUser();
@@ -73,14 +77,14 @@ public class CalendarService {
         Vacation vacation = calendarEvent.getVacation();
 
         // 반려당했을땐 즉시 연차 갯수 돌려 받으므로
-        if (vacation.getVacationStatus() != VacationStatus.REJECTED) {
+        if (vacation != null && vacation.getVacationStatus() != VacationStatus.REJECTED) {
             Employee requester = vacation.getCreatedBy();
             double increaseValue = ChronoUnit.DAYS.between(vacation.getStart(), vacation.getEnd()) + 1;
             if (VacationType.isHalf(vacation.getVacationType())) {
                 increaseValue -= 0.5;
             }
             // 특별 휴가일땐 돌려받지 못함
-            if (!VacationType.isFree(vacation.getVacationType())) { 
+            if (!VacationType.isFree(vacation.getVacationType())) {
                 employeeRepository.increaseAnnualLeave(requester.getId(), increaseValue);
             }
         }
@@ -111,5 +115,20 @@ public class CalendarService {
             vacation.setEnd(end);
         }
         calendarEventRepository.save(calendarEvent);
+    }
+
+    public Object getHolidayInfo(Integer year) {
+        Map<String, Object> params = Map.of(
+                "solYear", year,
+                "serviceKey","3fSpMFQsw%2F8QoK5YK%2BqiAEVq5voj4ZhYx1n9L0Y3yZjukLP1RyPR8ZQlGBo9nC%2FJiW6IaDutRFajnL8ZniT0gQ%3D%3D"
+        );
+        try {
+            HolidayResponse response = holidayExchanger.get(params);
+            log.info("response {}", response);
+            return response;
+        } catch (Exception e){
+            log.error(e.getMessage());
+            throw new HttpException(500, "공휴일 정보를 가져오지 못했습니다.");
+        }
     }
 }

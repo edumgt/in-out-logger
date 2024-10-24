@@ -30,5 +30,11 @@ public class SecretConfig {
         public static class KakaoClient extends ClientSecret{}
         public static class GoogleClient extends ClientSecret{}
     }
+    private ApiKey apiKey;
 
+    @Getter
+    @Setter
+    public static class ApiKey {
+        private String holiday;
+    }
 }

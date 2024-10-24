@@ -57,7 +57,7 @@ const useTable = () => {
           )
         ]),
         // 테이블 바디
-        h('tbody', {}, data.map((row: TableData<T>, index: number) =>
+        h('tbody', {}, data.map((row, index) =>
           h('tr', {
             class: (index % 2 === 0 ? 'bg-white' : 'bg-gray-50') + (onRowClick && ' hover:font-bold cursor-pointer'),
             onClick: () => onRowClick?.(row),

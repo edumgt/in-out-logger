@@ -15,7 +15,6 @@ import java.util.List;
 @RequestMapping("/api/calendar/events")
 @Secured("ROLE_INTERN")
 public class CalendarEventController {
-
     private final CalendarService calendarService;
 
     @GetMapping("/{eventYear}")
@@ -39,5 +38,10 @@ public class CalendarEventController {
     public ResponseEntity<?> deleteEvent(@PathVariable Long eventId) {
         calendarService.deleteEvent(eventId);
         return ResponseEntity.status(204).build();
+    }
+    @GetMapping("/holiday/years/{year}")
+    public ResponseEntity<?> getHolidayInfo(@PathVariable Integer year){
+        var data = calendarService.getHolidayInfo(year);
+        return ResponseEntity.ok(data);
     }
 }
