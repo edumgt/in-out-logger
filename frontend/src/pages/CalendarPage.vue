@@ -200,7 +200,7 @@ const calendarOptions = ref<CalendarOptions>({
     axios.patch('/api/calendar/events/' + arg.event.id, {
       start: arg.event.startStr,
       end: arg.event.endStr
-    }).catch((e: any) => {
+    }).catch((e: AxiosError) => {
       store.commit('setModal', {
         isOpen: true,
         content: h('p', messageHandler(e)),
@@ -281,7 +281,7 @@ const handleCheckIn = async () => {
       content: h('p', '출근처리 할까요?'),
       confirmText: '출근',
       onConfirm: async () => {
-        const message = await axios.post('/api/commute').then((res: AxiosResponse) => res.data).catch((e: AxiosError) => e.response.data)
+        const message = await axios.post('/api/commute').then((res: AxiosResponse) => res.data).catch((e: AxiosError) => e.response?.data)
         store.commit('setModal', {
             isOpen: true,
             content: h('p', message)
@@ -303,7 +303,7 @@ const handleCheckOut = async () => {
       content: h('p', '퇴근처리 할까요?'),
       confirmText: '퇴근',
       onConfirm: async () => {
-        const message = await axios.patch('/api/commute').then((res: AxiosResponse) => res.data).catch((e: AxiosError) => e.response.data)
+        const message = await axios.patch('/api/commute').then((res: AxiosResponse) => res.data).catch((e: AxiosError) => e.response?.data)
         store.commit('setModal', {
           isOpen: true,
           content: h('p', message)
@@ -326,7 +326,7 @@ const annualLeaveTableHeader: TableHeaders = {
   annualLeave: '잔여 연차'
 }
 const viewAnnualLeave = async () => {
-  const handleCellClick = (message, inputHandler) => {
+  const handleCellClick = (message: string, inputHandler?: InputHandler) => {
     return async (rowData, cell) => {
       store.commit('setModal', {
         isOpen: true,
@@ -538,7 +538,7 @@ const viewCommute = async () => {
     })
   }
   const setCommuteTable = () => {
-    table<typeof lateEmployeeTableHeader>(lateEmployeeTableHeader, commuteData, {
+    table(lateEmployeeTableHeader, commuteData, {
       onCellClick: {
         lateEmployeeName: setEmployeeTable,
         date: (rowData) => {
