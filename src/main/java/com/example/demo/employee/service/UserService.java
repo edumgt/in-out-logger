@@ -38,6 +38,7 @@ public class UserService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final RedisService redisService;
+
     // 일반 로그인
     public TokenDto signIn(LoginRequestDto loginRequestDto) {
         Employee employee = employeeRepository.findByEmail(loginRequestDto.getEmail())
@@ -50,18 +51,17 @@ public class UserService {
         try {
             Authentication authentication = managerBuilder.getObject().authenticate(authenticationToken);
             String clientIp = HttpUtils.getClientIp();
-            TokenDto tokenDto =  jwtService.generateToken(authentication);
+            TokenDto tokenDto = jwtService.generateToken(authentication);
             redisService.set(Redis.TOKEN_PREFIX + clientIp + tokenDto.getAccessToken(), tokenDto.getRefreshToken(), Duration.ofMillis(Token.REFRESH_TOKEN_EXPIRE_TIME));
             return tokenDto;
-        } catch (BadCredentialsException e){
+        } catch (BadCredentialsException e) {
             throw new HttpException(HttpStatus.BAD_REQUEST, "유효하지 않은 비밀번호입니다.");
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage());
             throw new HttpException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 
     }
-
 
 
     public void checkEmail(String email) {
