@@ -8,8 +8,7 @@ import axios from '@/utils/axios.ts'
 import useProgress from '@/hooks/useProgress.ts'
 import { useStore } from 'vuex'
 import { InputHandler, InputValue, SelectOption, selectOptions } from '@/stores/vuex/modules/modal.ts'
-import { CalendarOptions, DateSelectArg, EventApi, EventClickArg } from '@fullcalendar/core'
-import { dateToNumber } from '@/utils/string.ts'
+import { CalendarOptions, DateSelectArg, EventClickArg } from '@fullcalendar/core'
 import { AxiosError, AxiosResponse, isAxiosError } from 'axios'
 import { messageHandler } from '@/utils/error.ts'
 import { vacation, VacationType } from '@/types/vacation.ts'
@@ -17,7 +16,6 @@ import useTable, { TableHeaders } from '@/hooks/useTable.ts'
 import regex from '@/utils/regex.ts'
 import { isAdmin, jobLevels } from '@/utils/auth.ts'
 
-type Direction = 'asc' | 'desc'
 
 interface FetchedYears {
   [key: number]: boolean;
@@ -27,7 +25,6 @@ const HOLIDAY_PREFIX = '$holiday$'
 const vacationType = ref<VacationType>('종일 휴가')
 const calendarRef = ref<InstanceType<typeof FullCalendar>>()
 const calendarApi = computed(() => (calendarRef.value as InstanceType<typeof FullCalendar>).getApi())
-const currentEvents = ref<EventApi[]>([])
 const fetchedYears = ref<FetchedYears>({})
 
 const handleWeekendsToggle = () => {
@@ -44,7 +41,7 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
       h('div', { 'class': 'flex flex-col' }, [
         h('p', '일정명을 입력해주세요.'),
         h('div', { 'class': 'flex flex-row pt-2 pl-1 gap-2' }, [
-          h('label', { 'class': 'text-xs', 'for': 'isVacation' }, '휴가입니다.'),
+          h('label', { 'class': 'text-md', 'for': 'isVacation' }, '휴가입니다.'),
           h('input', {
               'type': 'checkbox',
               onChange(event: any) {
@@ -69,12 +66,11 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
         ])
       ]),
       h('div', { 'class': `flex gap-1` }, [
-        h('p', { 'class': 'mt-2 mr-1' }, '배경색 지정'),
         h('select', {
             onChange(event: any) {
               store.commit('setSelectBoxValue', event.target.value)
             },
-            'class': 'absolute'
+            'class': 'h-12'
           },
           selectOptions.map((option: SelectOption) =>
             h('option', { value: option }, option)
@@ -132,6 +128,7 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
 
 const handleEventClick = (clickInfo: EventClickArg) => {
   if(clickInfo.event.id.startsWith(HOLIDAY_PREFIX)){
+    console.log(clickInfo.event.id)
     return
   }
   store.commit('setModal', {
@@ -151,29 +148,6 @@ const handleEventClick = (clickInfo: EventClickArg) => {
       }
     }
   })
-}
-
-const direction = ref<Direction>('asc')
-
-const handleClickCheckbox = () => {
-  const opposite: Direction = direction.value === 'asc' ? 'desc' : 'asc'
-  direction.value = opposite
-  sortEvents()
-}
-
-const sortEvents = () => {
-  if (direction.value === 'asc') {
-    currentEvents.value.sort((a, b) => dateToNumber(a.startStr) - dateToNumber(b.startStr))
-  } else {
-    currentEvents.value.sort((a, b) => dateToNumber(b.startStr) - dateToNumber(a.startStr))
-  }
-}
-
-
-const handleEvents = (events: EventApi[]) => {
-  currentEvents.value = events
-  sortEvents()
-  console.log('set', events[0]?.startStr)
 }
 const calendarOptions = ref<CalendarOptions>({
   plugins: [
@@ -196,7 +170,7 @@ const calendarOptions = ref<CalendarOptions>({
   weekends: true,
   select: handleDateSelect,
   eventClick: handleEventClick,
-  eventsSet: handleEvents,
+  // eventsSet: handleEvents,
   // async eventDragStop(arg) {
   //   console.log('drag end', arg.event.startStr,arg.event.endStr)
   // },
@@ -259,7 +233,7 @@ const calendarOptions = ref<CalendarOptions>({
       if(holidays){
         for (const { dateName, isHoliday, date } of holidays) {
           calendarApi.value.addEvent({
-            id: `${HOLIDAY_PREFIX}${dateName}`,
+            id: `${HOLIDAY_PREFIX}${Math.random()}`,
             title: dateName,
             start: date,
             end: date,
@@ -286,12 +260,22 @@ const fetchEvents = async (year: number) => {
   }
   console.log('data fetching...')
   const events = await axios.get(`/api/calendar/events/${year}`).then((res: AxiosResponse) => res.data)
-  const holidays = await axios.get(`/api/calendar/events/holiday/years/${year}`).then((res: AxiosResponse) => res.data)
-  fetchedYears.value[year] = true
-  return {
-    events,
-    holidays
+  const result = {
+    events
   }
+  try {
+    const holidays = await axios.get(`/api/calendar/events/holiday/years/${year}`).then((res: AxiosResponse) => res.data)
+    result.holidays = holidays
+  } catch(e){
+    if(isAxiosError(e)){
+      store.commit('setModal', {
+        isOpen: true,
+        content: h('p', messageHandler(e))
+      })
+    }
+  }
+  fetchedYears.value[year] = true
+  return result
 }
 
 
@@ -391,15 +375,7 @@ const viewAnnualLeave = async () => {
         onClose: setAnnualLeaveTable
       },
       onCellClick: {
-        phoneNumber: handleCellClick('핸드폰 번호를 입력해주세요.', (input, prev) => {
-          input = input.replace(/[^0-9]/g, '').replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, '$1-$2-$3').replace(/(\-{1,2})$/g, '')
-          if (regex.phoneNumber.test(input)) {
-            store.commit('setDisableConfirm', false)
-            return input
-          }
-          store.commit('setDisableConfirm', true)
-          return prev
-        }),
+        phoneNumber: handleCellClick('핸드폰 번호를 입력해주세요.'),
         hireDate: handleCellClick('yyyy-MM-dd 형식으로 입력해주세요.', (input, prev) => {
           if (regex.yyyyMMdd.test(input)) {
             store.commit('setDisableConfirm', false)
@@ -525,15 +501,7 @@ const viewCommute = async () => {
         onClose: setCommuteTable
       },
       onCellClick: {
-        phoneNumber: handleCellClick('핸드폰 번호를 입력해주세요.', (input, prev) => {
-          input = input.replace(/[^0-9]/g, '').replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, '$1-$2-$3').replace(/(\-{1,2})$/g, '')
-          if (regex.phoneNumber.test(input)) {
-            store.commit('setDisableConfirm', false)
-            return input
-          }
-          store.commit('setDisableConfirm', true)
-          return prev
-        }),
+        phoneNumber: handleCellClick('핸드폰 번호를 입력해주세요.'),
         hireDate: handleCellClick('yyyy-MM-dd 형식으로 입력해주세요.', (input, prev) => {
           if (regex.yyyyMMdd.test(input)) {
             store.commit('setDisableConfirm', false)
@@ -726,23 +694,17 @@ const viewVacationApprovalProgress = useProgress(viewVacationApproval)
               <span class="flex-1 ms-3 whitespace-nowrap">휴가 결재</span>
             </div>
           </li>
-          <li class='sidebar-section'>
-            <label> <input type='checkbox' :checked='calendarOptions.weekends' @change='handleWeekendsToggle' /> toggle
-              weekends </label>
-          </li>
-          <li class='sidebar-section w-full'>
-            <h2>All Events ({{ currentEvents.length }})</h2>
-            <div class="mt-1 flex gap-1">
-              <input @change="handleClickCheckbox" :checked="direction === 'asc'" id="direction" type="checkbox" />
-              <label for="direction">오름차순</label>
+          <li v-if="calendarOptions.weekends">
+            <div @click="handleWeekendsToggle" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><rect width="36" height="36" x="6" y="6" rx="3"/><path d="M29 14.01h-9v7.024C20 21 22 20 25 20s4 2.034 4 6s-1 7-5 7c-3 0-4-2-4-3.992"/></g></svg>
+              <span class="flex-1 ms-3 whitespace-nowrap">주말 보지않기</span>
             </div>
-            <ul>
-              <li v-for='event in currentEvents' :key='event.id'>
-                <div class="cursor-pointer" @click="() => handleNavigateCalendar(event.startStr)">
-                  <b>{{ event.startStr }}</b> <i>{{ event.title }}</i>
-                </div>
-              </li>
-            </ul>
+          </li>
+          <li v-else>
+            <div @click="handleWeekendsToggle" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><rect width="36" height="36" x="6" y="6" rx="3"/><path d="M18.998 15H29l-8.006 18"/></g></svg>
+              <span class="flex-1 ms-3 whitespace-nowrap">주말도 보기</span>
+            </div>
           </li>
         </ul>
       </div>

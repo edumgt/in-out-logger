@@ -9,7 +9,19 @@ body,
     margin: 0;
     padding: 0;
     height: 100%;
+
 }
+
+@font-face {
+    font-family: 'leeseoyun';
+    src: url('@/assets/fonts.ttf') format('truetype');
+    font-weight: auto;
+    font-style: normal;
+}
+* {
+    font-family: leeseoyun, serif;
+}
+
 
 .main-wrap {
     display: flex;
