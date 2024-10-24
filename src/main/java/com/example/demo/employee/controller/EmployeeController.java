@@ -54,6 +54,12 @@ public class EmployeeController {
         vacationService.approvalVacation(vacationId);
         return ResponseEntity.status(200).body("승인되었습니다.");
     }
+    @DeleteMapping("/vacations/{vacationId}/rejection")
+    @Secured("ROLE_HEAD")
+    public ResponseEntity<?> rejectionVacation(@PathVariable Long vacationId, @RequestParam String reason){
+        vacationService.rejectionVacation(vacationId, reason);
+        return ResponseEntity.status(200).body("반려되었습니다.");
+    }
     @PatchMapping("/{employeeId}")
     public ResponseEntity<?> updateEmployee(@PathVariable Long employeeId, @RequestBody EmployeeDto employeeDto){
         employeeService.updateEmployee(employeeDto, employeeId);

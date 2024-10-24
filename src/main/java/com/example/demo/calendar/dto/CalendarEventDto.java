@@ -18,4 +18,5 @@ public class CalendarEventDto extends CommonDto {
     private String backgroundColor;
     private Boolean isVacation;
     private String vacationType;
+    private String vacationStatus;
 }

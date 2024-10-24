@@ -62,12 +62,13 @@ public class VacationService {
                 .vacationStatus(VacationStatus.PENDING)
                 .build();
 
+        // 특별휴가일땐 감소 없음
         if (!VacationType.isFree(vacationType)) {
-            double dateDiff = ChronoUnit.DAYS.between(start, end) + 1;
+            double decreaseValue = ChronoUnit.DAYS.between(start, end) + 1;
             if (VacationType.isHalf(vacationType)) {
-                dateDiff -= 0.5;
+                decreaseValue -= 0.5;
             }
-            employeeRepository.decreaseAnnualLeave(requester.getId(), dateDiff);
+            employeeRepository.decreaseAnnualLeave(requester.getId(), decreaseValue);
         }
         return vacation;
     }
@@ -97,14 +98,25 @@ public class VacationService {
         vacation.setApprovedBy(currentUser);
         vacation.setApprovedAt(LocalDateTime.now());
         vacation.setVacationStatus(VacationStatus.APPROVED);
-        CalendarEvent calendarEvent = vacation.getCalendarEvent();
-        String title = calendarEvent.getTitle();
-        int lastIndexOfPendingWord = title.lastIndexOf("보류");
-        if(lastIndexOfPendingWord != -1){
-            title = title.substring(0, lastIndexOfPendingWord) + "승인";
-            calendarEvent.setTitle(title);
-        }
         vacationRepository.save(vacation);
+    }
 
+    public void rejectionVacation(Long vacationId, String rejectedReason) {
+        Vacation vacation = vacationRepository.findById(vacationId)
+                .orElseThrow(() -> new HttpException(400, "잘못된 요청입니다."));
+        vacation.setVacationStatus(VacationStatus.REJECTED);
+
+        Employee employee = vacation.getCreatedBy();
+        VacationType vacationType = vacation.getVacationType();
+        // 돌려받는 연차 갯수
+        double returnValue = employee.getAnnualLeave() + 1;
+        if(VacationType.isHalf(vacationType)){
+            returnValue -= 0.5;
+        } else if(VacationType.isFree(vacationType)){
+            returnValue = 0;
+        }
+        employee.setAnnualLeave(returnValue);
+        vacation.setRejectedReason(rejectedReason);
+        vacationRepository.save(vacation);
     }
 }

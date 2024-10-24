@@ -51,15 +51,14 @@ public class CalendarService {
                 }
             }
             vacation = vacationService.createVacation(calendarEvent, vacationType, currentUser); // 휴가 요청 생성
-            if(SecurityUtils.isAdmin(currentUser)){ // 관리자라면 바로 승인
+            if (SecurityUtils.isAdmin(currentUser)) { // 관리자라면 바로 승인
                 vacation.setVacationStatus(VacationStatus.APPROVED);
             }
-            String status = vacation.getVacationStatus() == VacationStatus.APPROVED ? "승인" : "보류";
-            calendarEvent.setTitle("%s (%s) %s".formatted(vacationType.getValue(), currentUser.getName(), status) );
+            calendarEvent.setTitle("%s (%s)".formatted(vacationType.getValue(), currentUser.getName()));
         } else { // 휴가가 아니라면 일정에 사용자명 추가
             calendarEvent.setTitle("%s (%s)".formatted(calendarEventDto.getTitle(), currentUser.getName()));
         }
-        if(vacation != null){
+        if (vacation != null) {
             calendarEvent.setVacation(vacation);
         }
         calendarEventRepository.save(calendarEvent);
@@ -72,14 +71,20 @@ public class CalendarService {
                 .orElseThrow(() -> new HttpException(HttpStatus.BAD_REQUEST, "이미 삭제된 이벤트입니다."));
         SecurityUtils.checkPermission(calendarEvent.getCreatedBy().getId());
         Vacation vacation = calendarEvent.getVacation();
-        if(vacation != null && !VacationType.isFree(vacation.getVacationType())){
+
+        // 반려당했을땐 즉시 연차 갯수 돌려 받으므로
+        if (vacation.getVacationStatus() != VacationStatus.REJECTED) {
             Employee requester = vacation.getCreatedBy();
-            double dateDiff = ChronoUnit.DAYS.between(vacation.getStart(), vacation.getEnd()) + 1;
-            if(VacationType.isHalf(vacation.getVacationType())){
-                dateDiff -= 0.5;
+            double increaseValue = ChronoUnit.DAYS.between(vacation.getStart(), vacation.getEnd()) + 1;
+            if (VacationType.isHalf(vacation.getVacationType())) {
+                increaseValue -= 0.5;
             }
-            employeeRepository.increaseAnnualLeave(requester.getId(), dateDiff);
+            // 특별 휴가일땐 돌려받지 못함
+            if (!VacationType.isFree(vacation.getVacationType())) { 
+                employeeRepository.increaseAnnualLeave(requester.getId(), increaseValue);
+            }
         }
+
         calendarEventRepository.delete(calendarEvent);
     }
 

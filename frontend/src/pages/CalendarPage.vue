@@ -104,10 +104,10 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
             content: h('p', '휴가 신청이 완료되었습니다.')
           })
         }
-        const { id, start, end, title, backgroundColor } = data
+        const { id, start, end, title, backgroundColor, vacationStatus } = data
         calendarApi.addEvent({
           id,
-          title,
+          title: `${title} ${vacationStatus ?? ''}`,
           start,
           end,
           allDay: true,
@@ -237,10 +237,10 @@ const calendarOptions = ref<CalendarOptions>({
     try {
       const events = await fetchEvents(currentYear)
       if (events) {
-        for (const { id, title, start, end, backgroundColor } of events) {
+        for (const { id, title, start, end, backgroundColor, vacationStatus } of events) {
           calendarApi.value.addEvent({
             id,
-            title,
+            title: `${title} ${vacationStatus ?? ''}`,
             start,
             end,
             allDay: true,
@@ -557,12 +557,32 @@ const annualLeaveApprovalHeader = {
   vacationType: '분류'
 }
 
-const viewAnnualLeaveApproval = async () => {
+const viewVacationApproval = async () => {
   const data = await axios.get('/api/employees/vacations/pending').then((res: AxiosResponse) => res.data)
   const setApprovalTable = () => {
     table(annualLeaveApprovalHeader, data, {
+      onRowRightClick: (rowData) => {
+        const { employeeName, start, end, vacationType, vacationId } = rowData
+        store.commit('setModal', {
+          isOpen: true,
+          modalType: 'input',
+          content: h('p', `${employeeName}님의 ${vacationType}(${start}~${end}) 반려할까요?`),
+          placeholder: '반려 사유',
+          closeText: '뒤로',
+          onClose: setApprovalTable,
+          confirmText: '반려',
+          onConfirm: async (reason: string) => {
+            const message = await axios.delete(`/api/employees/vacations/${vacationId}/rejection?reason=${reason}`).then((res: AxiosResponse) => res.data)
+            store.commit('setModal', {
+              isOpen: true,
+              content: h('p', message),
+              closeText: '뒤로',
+              onClose: setApprovalTable
+            })
+          }
+        })
+      },
       onRowClick: (rowData) => {
-        console.log(rowData)
         const { employeeName, start, end, vacationType, vacationId } = rowData
         store.commit('setModal', {
           isOpen: true,
@@ -572,7 +592,9 @@ const viewAnnualLeaveApproval = async () => {
             const message = await axios.patch(`/api/employees/vacations/${vacationId}/approval`).then((res: AxiosResponse) => res.data)
             store.commit('setModal', {
               isOpen: true,
-              content: h('p', message)
+              content: h('p', message),
+              closeText: '뒤로',
+              onClose: setApprovalTable
             })
           },
           closeText: '뒤로',
@@ -593,7 +615,7 @@ const handleNavigateCalendar = (eventStartDate: string) => {
 }
 const viewCommuteProgress = useProgress(viewCommute)
 const viewAnnualLeaveProgress = useProgress(viewAnnualLeave)
-const viewAnnualLeaveApprovalProgress = useProgress(viewAnnualLeaveApproval)
+const viewVacationApprovalProgress = useProgress(viewVacationApproval)
 </script>
 
 <template>
@@ -641,16 +663,20 @@ const viewAnnualLeaveApprovalProgress = useProgress(viewAnnualLeaveApproval)
           </li>
           <li>
             <div @click="viewAnnualLeaveProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z" />
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48">
+                <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4">
+                  <path d="m11 14.999l-6 1c1.63-7.514 6.364-9.993 11-10c2.997-.005 5.952 1.026 8 2c2.048-.974 5-2 8-2c4.611 0 9.37 2.486 11 10l-6-1c.559 2.1 1.788 5.792 0 9c-2.98-2.673-9.87-6.709-13-9c-3.13 2.291-10.02 6.327-13 9c-1.788-3.207-.559-6.9 0-9" />
+                  <path d="M24 15c-.755 3.889-1.811 13.533 0 21" />
+                  <path d="M12 42h24c-4.787-4.585-7-5.995-12-6s-10.108 3.382-12 6" />
+                </g>
               </svg>
               <span class="flex-1 ms-3 whitespace-nowrap">휴가 조회</span>
             </div>
           </li>
           <li v-if="isAdmin()">
-            <div @click="viewAnnualLeaveApprovalProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z" />
+            <div @click="viewVacationApprovalProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 2048 2048">
+                <path fill="currentColor" d="M1728 1664q26 0 45 19t19 45t-19 45t-45 19H960q-26 0-45-19t-19-45t19-45t45-19zm-128 256q26 0 45 19t19 45t-19 45t-45 19h-512q-26 0-45-19t-19-45t19-45t45-19zm238-512h210v128H537q-10 64-14 128t-7 127t-3 128t-1 129H128v-193q0-81 6-160t17-159H0v-128h172q50-245 151-471t250-427q-146-5-268-61T82 289l-45-46l47-44q104-97 228-147T579 1q156 0 286 58t239 168q77 2 149 24t134 60t113 90t87 115t57 135t20 150v64h-64q-132 0-247-56t-199-159q-76 138-191 227t-269 125q-43 99-76 200t-57 206h289q22-84 69-154t112-122t146-79t167-29q87 0 167 28t145 80t113 121t69 155M1238 380q-6 65-26 132q51 88 134 146t185 74q-10-61-35-115t-63-101t-88-80t-107-56m-126 7q-102 8-192 50T759 547T642 704t-61 189q85-7 161-36t139-78t112-112t81-144q14-33 23-67t15-69M224 247q80 66 177 101t201 35q97 0 187-30t168-88q-80-66-177-101t-201-35q-97 0-187 30t-168 88m318 775q-8 2-16 2t-16 0h-32q-16 0-32-2v-47q-53 118-89 232t-59 230t-32 235t-10 248h128q0-121 8-234t27-223t49-219t74-222m442 386h720q-20-57-56-104t-83-81t-104-52t-117-19q-61 0-117 18t-103 52t-84 81t-56 105" />
               </svg>
               <span class="flex-1 ms-3 whitespace-nowrap">휴가 결재</span>
             </div>

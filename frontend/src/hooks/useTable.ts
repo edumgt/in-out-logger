@@ -27,14 +27,16 @@ export type TableRowCallback<T extends TableHeaders> = (rowData: TableData<T>) =
 
 export interface TableOptions<T extends TableHeaders> {
   onCellClick?: TableCellCallback<T>
+  onCellRightClick?: TableCellCallback<T>
   onRowClick?: TableRowCallback<T>
+  onRowRightClick?: TableRowCallback<T>
   additionalPayload?: Partial<ModalModuleState>
 }
 
 const useTable = () => {
   const store = useStore()
   return <T extends TableHeaders>(tableHeaders: T, data: TableData<T>[], options?: TableOptions<T>) => {
-    const { onCellClick, onRowClick, additionalPayload } = options ?? {}
+    const { onCellClick, onRowClick, onCellRightClick, onRowRightClick, additionalPayload } = options ?? {}
     store.commit('setModal', {
       isOpen: true,
       ...additionalPayload,
@@ -58,7 +60,11 @@ const useTable = () => {
         h('tbody', {}, data.map((row: TableData<T>, index: number) =>
           h('tr', {
             class: (index % 2 === 0 ? 'bg-white' : 'bg-gray-50') + (onRowClick && ' hover:font-bold cursor-pointer'),
-            onClick: () => onRowClick?.(row)
+            onClick: () => onRowClick?.(row),
+            onContextmenu: (e) => {
+              e.preventDefault()
+              onRowRightClick?.(row)
+            }
           }, Object.keys(tableHeaders).reduce((acc, key) => {
               if (typeof tableHeaders[key] === 'string') {
                 acc.push(h('td', {
@@ -68,6 +74,10 @@ const useTable = () => {
                       e.stopPropagation()
                     }
                     onCellClick?.[key]?.(row, { value: row[key], name: key })
+                  },
+                  onContextmenu: (e) => {
+                    e.preventDefault()
+                    onCellRightClick?.[key]?.(row, { value: row[key], name: key })
                   }
                 }, row[key]))
               }

@@ -36,6 +36,10 @@ public class Vacation extends CommonProperties {
     @Column(nullable = false)
     @Comment("연차 사유")
     private String reason;
+    @Column
+    @Comment("반려 사유")
+    private String rejectedReason;
+
     @Column(nullable = false)
     @Comment("연차 시작일자")
     private LocalDate start;
@@ -52,7 +56,7 @@ public class Vacation extends CommonProperties {
     @Comment("승인자")
     private Employee approvedBy;
 
-    @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true, cascade = {CascadeType.REMOVE, CascadeType.MERGE, CascadeType.PERSIST})
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "calendar_event_id")
     @Comment("이벤트 FK")
     private CalendarEvent calendarEvent;
