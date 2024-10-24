@@ -22,6 +22,7 @@ type Direction = 'asc' | 'desc'
 interface FetchedYears {
   [key: number]: boolean;
 }
+const HOLIDAY_PREFIX = '$holiday$'
 
 const vacationType = ref<VacationType>('종일 휴가')
 const calendarRef = ref<InstanceType<typeof FullCalendar>>()
@@ -130,6 +131,9 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
 }
 
 const handleEventClick = (clickInfo: EventClickArg) => {
+  if(clickInfo.event.id.startsWith(HOLIDAY_PREFIX)){
+    return
+  }
   store.commit('setModal', {
     isOpen: true,
     content: h('p', '일정을 삭제할까요?'),
@@ -197,6 +201,10 @@ const calendarOptions = ref<CalendarOptions>({
   //   console.log('drag end', arg.event.startStr,arg.event.endStr)
   // },
   eventDrop(arg) {
+    if(arg.event.id.startsWith(HOLIDAY_PREFIX)){
+      arg.revert()
+      return
+    }
     axios.patch('/api/calendar/events/' + arg.event.id, {
       start: arg.event.startStr,
       end: arg.event.endStr
@@ -235,7 +243,7 @@ const calendarOptions = ref<CalendarOptions>({
       return
     }
     try {
-      const events = await fetchEvents(currentYear)
+      const { events, holidays } = await fetchEvents(currentYear)
       if (events) {
         for (const { id, title, start, end, backgroundColor, vacationStatus } of events) {
           calendarApi.value.addEvent({
@@ -248,8 +256,25 @@ const calendarOptions = ref<CalendarOptions>({
           })
         }
       }
-      const holidays = await axios.get(`/api/calendar/events/holiday/years/${currentYear}`)
-      console.log(holidays.response.data)
+      if(holidays){
+        for (const { dateName, isHoliday, date } of holidays) {
+          calendarApi.value.addEvent({
+            id: `${HOLIDAY_PREFIX}${dateName}`,
+            title: dateName,
+            start: date,
+            end: date,
+            allDay: true,
+            backgroundColor: 'cream',
+          });
+        }
+      }
+    } catch(e){
+      if(isAxiosError(e)){
+        store.commit('setModal', {
+          isOpen: true,
+          content: h('p', messageHandler(e))
+        })
+      }
     } finally {
       store.commit('setIsLoading', false)
     }
@@ -260,9 +285,13 @@ const fetchEvents = async (year: number) => {
     return
   }
   console.log('data fetching...')
-  const response = await axios.get(`/api/calendar/events/${year}`)
+  const events = await axios.get(`/api/calendar/events/${year}`).then((res: AxiosResponse) => res.data)
+  const holidays = await axios.get(`/api/calendar/events/holiday/years/${year}`).then((res: AxiosResponse) => res.data)
   fetchedYears.value[year] = true
-  return response.data
+  return {
+    events,
+    holidays
+  }
 }
 
 
@@ -285,8 +314,8 @@ const handleCheckIn = async () => {
       onConfirm: async () => {
         const message = await axios.post('/api/commute').then((res: AxiosResponse) => res.data).catch((e: AxiosError) => e.response?.data)
         store.commit('setModal', {
-            isOpen: true,
-            content: h('p', message)
+          isOpen: true,
+          content: h('p', message)
         })
       }
     })

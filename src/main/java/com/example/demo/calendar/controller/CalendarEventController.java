@@ -2,6 +2,7 @@ package com.example.demo.calendar.controller;
 
 import com.example.demo.calendar.dto.CalendarEventDto;
 import com.example.demo.calendar.dto.request.ChangeEventDateRequestDto;
+import com.example.demo.calendar.dto.response.HolidayResponseDto;
 import com.example.demo.calendar.service.CalendarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -41,7 +42,7 @@ public class CalendarEventController {
     }
     @GetMapping("/holiday/years/{year}")
     public ResponseEntity<?> getHolidayInfo(@PathVariable Integer year){
-        var data = calendarService.getHolidayInfo(year);
+        List<HolidayResponseDto> data = calendarService.getHolidayInfo(year);
         return ResponseEntity.ok(data);
     }
 }

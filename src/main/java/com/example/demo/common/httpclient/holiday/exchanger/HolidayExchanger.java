@@ -11,6 +11,6 @@ import java.util.Map;
 @HttpExchange("https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo")
 public interface HolidayExchanger {
 
-    @GetExchange(accept = MediaType.TEXT_XML_VALUE)
+    @GetExchange(accept = MediaType.APPLICATION_XML_VALUE)
     HolidayResponse get(@RequestParam Map<String, Object> params);
 }

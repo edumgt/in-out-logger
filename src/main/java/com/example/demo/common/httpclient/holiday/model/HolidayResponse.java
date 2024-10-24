@@ -1,29 +1,82 @@
 package com.example.demo.common.httpclient.holiday.model;
 
-import com.example.demo.common.httpclient.BooleanDeserializer;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.time.LocalDate;
+import java.util.List;
 
+@XmlRootElement(name = "response")
+@XmlAccessorType(XmlAccessType.FIELD)
+@Getter
+@Setter
 public class HolidayResponse {
-    private String resultCode;
-    @JsonProperty("resultMsg")
-    private String resultMessage;
-    @JsonProperty("numOfRows")
-    private Integer pageSize;
-    private Integer pageNo;
-    private Integer totalCount;
-    @JsonProperty("locdate")
-    @JsonFormat(pattern = "yyyyMMdd")
-    private LocalDate date;
+    @XmlElement(name = "header")
+    private Header header;
 
-    @JsonProperty("seq")
-    private Integer sequence;
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @Getter
+    @Setter
+    public static class Header {
+        @XmlElement(name = "resultCode")
+        private String resultCode;
+        @XmlElement(name = "resultMsg")
+        private String resultMsg;
+    }
 
-    private String dateKind;
-    @JsonDeserialize(using = BooleanDeserializer.class)
-    private Boolean isHoliday;
-    private String dateName;
+    @XmlElement(name = "body")
+    private Body body;
+
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @Getter
+    @Setter
+    public static class Body {
+        @XmlElement(name = "items")
+        private Items items;
+
+        @XmlAccessorType(XmlAccessType.FIELD)
+        @Getter
+        @Setter
+        public static class Items {
+            @XmlElement(name = "item")
+            private List<Item> item;
+
+            @XmlAccessorType(XmlAccessType.FIELD)
+            @Getter
+            @Setter
+            public static class Item {
+                @XmlElement(name = "dateKind")
+                private String dateKind;
+
+                @XmlElement(name = "dateName")
+                private String dateName;
+
+                @XmlElement(name = "isHoliday")
+                private String isHoliday;
+
+                @XmlElement(name = "locdate")
+                private String locdate;
+
+                @XmlElement(name = "seq")
+                private int seq;
+            }
+        }
+
+        @XmlElement(name = "numOfRows")
+        private int numOfRows;
+
+        @XmlElement(name = "pageNo")
+        private int pageNo;
+
+        @XmlElement(name = "totalCount")
+        private int totalCount;
+
+    }
 }
+
+
+
+

@@ -3,6 +3,7 @@ package com.example.demo.calendar.service;
 
 import com.example.demo.calendar.dto.CalendarEventDto;
 import com.example.demo.calendar.dto.request.ChangeEventDateRequestDto;
+import com.example.demo.calendar.dto.response.HolidayResponseDto;
 import com.example.demo.calendar.entity.CalendarEvent;
 import com.example.demo.calendar.entity.Vacation;
 import com.example.demo.calendar.enums.VacationStatus;
@@ -12,6 +13,7 @@ import com.example.demo.calendar.repository.CalendarEventRepository;
 import com.example.demo.common.exception.HttpException;
 import com.example.demo.common.httpclient.holiday.exchanger.HolidayExchanger;
 import com.example.demo.common.httpclient.holiday.model.HolidayResponse;
+import com.example.demo.common.model.SecretConfig;
 import com.example.demo.common.utils.SecurityUtils;
 import com.example.demo.employee.entity.Employee;
 import com.example.demo.employee.repository.EmployeeRepository;
@@ -20,8 +22,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +41,8 @@ public class CalendarService {
     private final VacationService vacationService;
     private final EmployeeRepository employeeRepository;
     private final HolidayExchanger holidayExchanger;
+    private final RestTemplate restTemplate;
+    private final SecretConfig secretConfig;
 
     public CalendarEventDto createEvent(CalendarEventDto calendarEventDto) {
         Employee currentUser = SecurityUtils.getCurrentUser();
@@ -57,6 +64,8 @@ public class CalendarService {
             vacation = vacationService.createVacation(calendarEvent, vacationType, currentUser); // 휴가 요청 생성
             if (SecurityUtils.isAdmin(currentUser)) { // 관리자라면 바로 승인
                 vacation.setVacationStatus(VacationStatus.APPROVED);
+                vacation.setApprovedBy(currentUser);
+                vacation.setApprovedAt(LocalDateTime.now());
             }
             calendarEvent.setTitle("%s (%s)".formatted(vacationType.getValue(), currentUser.getName()));
         } else { // 휴가가 아니라면 일정에 사용자명 추가
@@ -117,16 +126,22 @@ public class CalendarService {
         calendarEventRepository.save(calendarEvent);
     }
 
-    public Object getHolidayInfo(Integer year) {
+    public List<HolidayResponseDto> getHolidayInfo(Integer year) {
         Map<String, Object> params = Map.of(
                 "solYear", year,
-                "serviceKey","3fSpMFQsw%2F8QoK5YK%2BqiAEVq5voj4ZhYx1n9L0Y3yZjukLP1RyPR8ZQlGBo9nC%2FJiW6IaDutRFajnL8ZniT0gQ%3D%3D"
+                "numOfRows", 100
         );
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         try {
             HolidayResponse response = holidayExchanger.get(params);
             log.info("response {}", response);
-            return response;
-        } catch (Exception e){
+            List<HolidayResponse.Body.Items.Item> items = response.getBody().getItems().getItem();
+            return items.stream().map(item -> new HolidayResponseDto(
+                            item.getDateName(),
+                            item.getIsHoliday().equals("Y"),
+                            LocalDate.parse(item.getLocdate(), formatter)))
+                    .toList();
+        } catch (Exception e) {
             log.error(e.getMessage());
             throw new HttpException(500, "공휴일 정보를 가져오지 못했습니다.");
         }

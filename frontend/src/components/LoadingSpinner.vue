@@ -20,13 +20,27 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div v-if="isLoading" class="loading-spinner-wrap z-50">
-    <img src="@/assets/vue-circle.png" width="100" height="100" class="loading-spinner" alt="Vue Spinner" />
-    <span class="text-center">Loading {{ '.'.repeat(counter) }}</span>
+  <div v-if="isLoading">
+    <!-- 배경 오버레이 추가 -->
+    <div class="loading-overlay"></div>
+    <div class="loading-spinner-wrap z-50">
+      <img src="@/assets/vue-circle.png" width="100" height="100" class="loading-spinner" alt="Vue Spinner" />
+      <span class="text-white text-center">Loading {{ '.'.repeat(counter) }}</span>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3); /* 반투명 검정 배경 */
+  z-index: 49; /* 스피너보다 낮은 z-index */
+}
+
 .loading-spinner-wrap {
   left: 47%;
   top: 40%;
@@ -38,7 +52,7 @@ watchEffect(() => {
 
 .loading-spinner {
   position: relative;
-  animation: spin 2s linear infinite; /* 2초 동안 회전하며 무한 반복 */
+  animation: spin 2s linear infinite;
   transform: translate(-50%, -50%);
 }
 
@@ -50,5 +64,4 @@ watchEffect(() => {
     transform: rotate(360deg);
   }
 }
-
 </style>
