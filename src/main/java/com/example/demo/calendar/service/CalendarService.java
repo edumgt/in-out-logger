@@ -5,6 +5,7 @@ import com.example.demo.calendar.dto.CalendarEventDto;
 import com.example.demo.calendar.dto.request.ChangeEventDateRequestDto;
 import com.example.demo.calendar.entity.CalendarEvent;
 import com.example.demo.calendar.entity.Vacation;
+import com.example.demo.calendar.enums.VacationStatus;
 import com.example.demo.calendar.enums.VacationType;
 import com.example.demo.calendar.mapper.CalendarMapper;
 import com.example.demo.calendar.repository.CalendarEventRepository;
@@ -34,6 +35,7 @@ public class CalendarService {
 
     public CalendarEventDto createEvent(CalendarEventDto calendarEventDto) {
         Employee currentUser = SecurityUtils.getCurrentUser();
+        CalendarEvent calendarEvent = calendarMapper.toEntity(calendarEventDto);
         Vacation vacation = null;
         if (calendarEventDto.getIsVacation()) { // 휴가라면
             // 휴가라면 휴가 타입과 사용자명 추가
@@ -48,17 +50,19 @@ public class CalendarService {
                     throw new HttpException(400, "반차는 1일 단위로 추가해주시기 바랍니다.");
                 }
             }
-            vacation = vacationService.vacationRequest(calendarEventDto, vacationType, currentUser); // 휴가 요청 생성
-            calendarEventDto.setTitle("%s (%s)".formatted(vacationType.getValue(), currentUser.getName()));
+            vacation = vacationService.createVacation(calendarEvent, vacationType, currentUser); // 휴가 요청 생성
+            if(SecurityUtils.isAdmin(currentUser)){ // 관리자라면 바로 승인
+                vacation.setVacationStatus(VacationStatus.APPROVED);
+            }
+            String status = vacation.getVacationStatus() == VacationStatus.APPROVED ? "승인" : "보류";
+            calendarEvent.setTitle("%s (%s) %s".formatted(vacationType.getValue(), currentUser.getName(), status) );
         } else { // 휴가가 아니라면 일정에 사용자명 추가
-            calendarEventDto.setTitle("%s (%s)".formatted(calendarEventDto.getTitle(), currentUser.getName()));
+            calendarEvent.setTitle("%s (%s)".formatted(calendarEventDto.getTitle(), currentUser.getName()));
         }
-        CalendarEvent calendarEvent = calendarMapper.toEntity(calendarEventDto);
-        if (vacation != null) {
+        if(vacation != null){
             calendarEvent.setVacation(vacation);
         }
-
-        calendarEvent = calendarEventRepository.save(calendarEvent);
+        calendarEventRepository.save(calendarEvent);
         calendarEventDto = calendarMapper.toDto(calendarEvent);
         return calendarEventDto;
     }

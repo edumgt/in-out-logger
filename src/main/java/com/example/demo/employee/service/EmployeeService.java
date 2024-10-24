@@ -9,8 +9,7 @@ import com.example.demo.employee.entity.Employee;
 import com.example.demo.employee.mapper.EmployeeMapper;
 import com.example.demo.employee.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,13 +20,13 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class EmployeeService {
-    private static final Logger log = LoggerFactory.getLogger(EmployeeService.class);
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
 
     @Transactional(readOnly = true)
-    public List<AnnualLeaveResponseDto> getAllAnnualLeave() {
+    public List<AnnualLeaveResponseDto> getAllVacations() {
         List<Employee> employees = employeeRepository.findAll();
         return employees.stream()
                 .map(employee -> new AnnualLeaveResponseDto(employee.getName(), employee.getAnnualLeave(), employee.getId()))

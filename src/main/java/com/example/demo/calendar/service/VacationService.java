@@ -1,23 +1,28 @@
 package com.example.demo.calendar.service;
 
-import com.example.demo.calendar.dto.CalendarEventDto;
 import com.example.demo.calendar.dto.VacationDto;
+import com.example.demo.calendar.dto.response.PendingVacationDto;
+import com.example.demo.calendar.entity.CalendarEvent;
 import com.example.demo.calendar.entity.Vacation;
 import com.example.demo.calendar.enums.VacationStatus;
 import com.example.demo.calendar.enums.VacationType;
 import com.example.demo.calendar.mapper.VacationMapper;
 import com.example.demo.calendar.repository.VacationRepository;
 import com.example.demo.common.exception.HttpException;
+import com.example.demo.common.utils.SecurityUtils;
 import com.example.demo.employee.entity.Employee;
 import com.example.demo.employee.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -43,34 +48,63 @@ public class VacationService {
         }
     }
 
-    public Vacation vacationRequest(CalendarEventDto calendarEventDto, VacationType vacationType, Employee requester) {
-        LocalDate start = calendarEventDto.getStart();
-        LocalDate end = calendarEventDto.getEnd().minusDays(1);
+    public Vacation createVacation(CalendarEvent calendarEvent, VacationType vacationType, Employee requester) {
+        LocalDate start = calendarEvent.getStart();
+        LocalDate end = calendarEvent.getEnd().minusDays(1);
         validateVacationDate(start, end, requester);
 
         Vacation vacation = Vacation.builder()
                 .vacationType(vacationType)
-                .reason(calendarEventDto.getTitle())
+                .reason(calendarEvent.getTitle())
                 .start(start)
                 .end(end)
+                .calendarEvent(calendarEvent)
                 .vacationStatus(VacationStatus.PENDING)
                 .build();
 
-        if(!VacationType.isFree(vacationType)){
+        if (!VacationType.isFree(vacationType)) {
             double dateDiff = ChronoUnit.DAYS.between(start, end) + 1;
             if (VacationType.isHalf(vacationType)) {
                 dateDiff -= 0.5;
             }
             employeeRepository.decreaseAnnualLeave(requester.getId(), dateDiff);
         }
-        return vacationRepository.save(vacation);
+        return vacation;
     }
 
 
     public List<VacationDto> getVacationLogs(Long employeeId) {
-        List<Vacation> vacations = vacationRepository.findAllById(employeeId);
+        Employee ruquester = Employee.builder()
+                .id(employeeId)
+                .build();
+        List<Vacation> vacations = vacationRepository.findAllByCreatedBy(ruquester);
         return vacations.stream()
                 .map(vacationMapper::toDto)
                 .toList();
+    }
+
+    public List<PendingVacationDto> getPendingVacations() {
+        List<Vacation> vacations = vacationRepository.findAllByVacationStatus(VacationStatus.PENDING);
+        return vacations.stream()
+                .map(vacationMapper::toPendingVacationDto)
+                .toList();
+    }
+
+    public void approvalVacation(Long vacationId) {
+        Vacation vacation = vacationRepository.findById(vacationId)
+                .orElseThrow(() -> new HttpException(400, "잘못된 요청입니다."));
+        Employee currentUser = SecurityUtils.getCurrentUser();
+        vacation.setApprovedBy(currentUser);
+        vacation.setApprovedAt(LocalDateTime.now());
+        vacation.setVacationStatus(VacationStatus.APPROVED);
+        CalendarEvent calendarEvent = vacation.getCalendarEvent();
+        String title = calendarEvent.getTitle();
+        int lastIndexOfPendingWord = title.lastIndexOf("보류");
+        if(lastIndexOfPendingWord != -1){
+            title = title.substring(0, lastIndexOfPendingWord) + "승인";
+            calendarEvent.setTitle(title);
+        }
+        vacationRepository.save(vacation);
+
     }
 }

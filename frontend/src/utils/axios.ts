@@ -20,7 +20,7 @@ axios.interceptors.response.use(async (response) => {
   },
   async (error) => {
     if (error.response && error.response.status === 401) {
-      await router.push('/sign-in')
+      await router.replace('/sign-in')
     }
     return Promise.reject(error)
   }

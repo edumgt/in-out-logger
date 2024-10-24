@@ -1,6 +1,7 @@
 package com.example.demo.employee.controller;
 
 import com.example.demo.calendar.dto.VacationDto;
+import com.example.demo.calendar.dto.response.PendingVacationDto;
 import com.example.demo.calendar.service.VacationService;
 import com.example.demo.employee.dto.EmployeeDto;
 import com.example.demo.employee.dto.response.AnnualLeaveResponseDto;
@@ -26,15 +27,32 @@ public class EmployeeController {
         return ResponseEntity.ok(data);
     }
 
-    @GetMapping("/annual-leave")
-    public ResponseEntity<?> getAllAnnualLeave(){
-        List<AnnualLeaveResponseDto> data = employeeService.getAllAnnualLeave();
+    /**
+     * 모든 연차 정보 조회
+     * @return
+     */
+    @GetMapping("/vacations")
+    public ResponseEntity<?> getAllVacations(){
+        List<AnnualLeaveResponseDto> data = employeeService.getAllVacations();
         return ResponseEntity.status(200).body(data);
     }
-    @GetMapping("/{employeeId}/annual-leave")
-    public ResponseEntity<?> getAnnualLeave(@PathVariable Long employeeId){
+
+    @GetMapping("/vacations/pending")
+    public ResponseEntity<?> getAllPendingVacations(){
+        List<PendingVacationDto> data = vacationService.getPendingVacations();
+        return ResponseEntity.status(200).body(data);
+    }
+
+    @GetMapping("/{employeeId}/vacations")
+    public ResponseEntity<?> getVacationLogs(@PathVariable Long employeeId){
         List<VacationDto> data = vacationService.getVacationLogs(employeeId);
         return ResponseEntity.status(200).body(data);
+    }
+    @PatchMapping("/vacations/{vacationId}/approval")
+    @Secured("ROLE_HEAD")
+    public ResponseEntity<?> approvalVacation(@PathVariable Long vacationId){
+        vacationService.approvalVacation(vacationId);
+        return ResponseEntity.status(200).body("승인되었습니다.");
     }
     @PatchMapping("/{employeeId}")
     public ResponseEntity<?> updateEmployee(@PathVariable Long employeeId, @RequestBody EmployeeDto employeeDto){

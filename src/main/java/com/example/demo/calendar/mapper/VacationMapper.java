@@ -1,6 +1,7 @@
 package com.example.demo.calendar.mapper;
 
 import com.example.demo.calendar.dto.VacationDto;
+import com.example.demo.calendar.dto.response.PendingVacationDto;
 import com.example.demo.calendar.entity.Vacation;
 import com.example.demo.common.tools.CommonMapper;
 import com.example.demo.employee.entity.Employee;
@@ -16,10 +17,24 @@ public interface VacationMapper {
     @Mapping(source = "approvedBy", target = "approvedBy", qualifiedByName = "approvedByToString")
     VacationDto toDto(Vacation vacation);
 
+    @Mapping(source = "createdBy", target = "createdBy", qualifiedByName = "createdByToId")
+    @Mapping(source = "updatedBy", target = "updatedBy", qualifiedByName = "updatedByToId")
+    @Mapping(source = "createdBy", target = "employeeName", qualifiedByName = "createdByToName")
+    @Mapping(source = "id", target = "vacationId")
+    PendingVacationDto toPendingVacationDto(Vacation vacation);
+
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true) // id는 null로 받음
     @Mapping(target = "approvedBy", ignore = true)
     Vacation toEntity(VacationDto vacationDto);
+
+    @Named("createdByToName")
+    default String createdByToName(Employee employee){
+        if(employee == null){
+            return null;
+        }
+        return employee.getName();
+    }
 
     @Named("approvedByToString")
     default String approvedByToString(Employee approvedBy){

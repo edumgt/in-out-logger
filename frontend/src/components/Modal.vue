@@ -15,10 +15,16 @@ const handleConfirm = computed(() => store.getters.handleModalConfirm)
 const content = computed(() => store.getters.getContent)
 const closeText = computed(() => store.getters.getCloseText)
 const confirmText = computed(() => store.getters.getConfirmText)
+const closeModalWithoutSideEffect = () => {
+  store.commit('setModal', {
+    isOpen: false
+  })
+}
+
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50" v-show="isModalOpen" >
+  <div class="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50" v-show="isModalOpen" @click="closeModalWithoutSideEffect">
     <div class="relative bg-white rounded-lg shadow-xl p-6 m-4 w-auto min-w-[500px]" @click.stop="">
       <div v-show="isModalOpen" class="mt-4">
         <div class="w-auto flex  ">

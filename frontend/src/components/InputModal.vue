@@ -13,7 +13,11 @@ const inputValue = computed({
 const closeText = computed(() => store.getters.getCloseText)
 const confirmText = computed(() => store.getters.getConfirmText)
 const disableConfirm = computed(() => store.getters.getDisableConfirm)
-
+const closeModalWithoutSideEffect = () => {
+  store.commit('setModal', {
+    isOpen: false
+  })
+}
 
 const inputRef = ref()
 
@@ -26,7 +30,7 @@ watch([isModalOpen],async () => {
 
 </script>
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50" v-show="isModalOpen">
+  <div class="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50" v-show="isModalOpen" @click="closeModalWithoutSideEffect">
     <div class="relative bg-white rounded-lg shadow-xl p-6 m-4 max-w-xl w-full" @click.stop="">
       <div v-show="isModalOpen" class="mt-4">
         <component :is="store.getters.getContent" class="text-lg mb-4"></component>

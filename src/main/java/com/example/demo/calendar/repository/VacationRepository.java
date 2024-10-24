@@ -1,10 +1,13 @@
 package com.example.demo.calendar.repository;
 
 import com.example.demo.calendar.entity.Vacation;
+import com.example.demo.calendar.enums.VacationStatus;
 import com.example.demo.employee.entity.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,7 +23,12 @@ public interface VacationRepository extends JpaRepository<Vacation, Long> {
                                             @Param("start") LocalDate start,
                                             @Param("end") LocalDate end);
 
+    List<Vacation> findAllByCreatedBy(Employee requester);
 
-    List<Vacation> findAllById(Long employeeId);
+    List<Vacation> findAllByVacationStatus(VacationStatus vacationStatus);
 
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query("UPDATE Vacation t SET t.vacationStatus = :vacationStatus WHERE t.id = :vacationId")
+    void updateVacationStatusById(@Param("vacationStatus") VacationStatus vacationStatus, @Param("vacationId") Long vacationId);
 }

@@ -15,7 +15,7 @@ import { messageHandler } from '@/utils/error.ts'
 import { vacation, VacationType } from '@/types/vacation.ts'
 import useTable, { TableHeaders } from '@/hooks/useTable.ts'
 import regex from '@/utils/regex.ts'
-import { jobLevels } from '@/utils/auth.ts'
+import { isAdmin, jobLevels } from '@/utils/auth.ts'
 
 type Direction = 'asc' | 'desc'
 
@@ -391,7 +391,7 @@ const viewAnnualLeave = async () => {
   }
 
 
-  const data = await axios.get('/api/employees/annual-leave').then((res: AxiosResponse) => res.data)
+  const data = await axios.get('/api/employees/vacations').then((res: AxiosResponse) => res.data)
   const annualLeaveDetailsHeader = {
     start: '시작일',
     end: '종료일',
@@ -406,7 +406,7 @@ const viewAnnualLeave = async () => {
       onCellClick: {
         employeeName: setEmployeeTable,
         annualLeave: async (rowData, cell) => {
-          const annualLeaveDetails = await axios.get(`/api/employees/${rowData.employeeId}/annual-leave`).then((res: AxiosResponse) => res.data)
+          const annualLeaveDetails = await axios.get(`/api/employees/${rowData.employeeId}/vacations`).then((res: AxiosResponse) => res.data)
           table(annualLeaveDetailsHeader, annualLeaveDetails, {
             additionalPayload: {
               onClose: setAnnualLeaveTable,
@@ -549,6 +549,42 @@ const viewCommute = async () => {
 
 }
 
+const annualLeaveApprovalHeader = {
+  employeeName: '이름',
+  start: '시작일',
+  end: '종료일',
+  reason: '사유',
+  vacationType: '분류'
+}
+
+const viewAnnualLeaveApproval = async () => {
+  const data = await axios.get('/api/employees/vacations/pending').then((res: AxiosResponse) => res.data)
+  const setApprovalTable = () => {
+    table(annualLeaveApprovalHeader,data, {
+      onRowClick: (rowData) => {
+        console.log(rowData)
+        const {employeeName, start, end ,vacationType, vacationId} = rowData
+        store.commit('setModal', {
+          isOpen: true,
+          content: h('p', `${employeeName}님의 ${vacationType}(${start}~${end}) 승인할까요?`),
+          confirmText: '승인',
+          onConfirm: async () => {
+            const message = await axios.patch(`/api/employees/vacations/${vacationId}/approval`).then((res: AxiosResponse) => res.data)
+            store.commit('setModal', {
+              isOpen: true,
+              content: h('p', message)
+            })
+          },
+          closeText: '뒤로',
+          onClose: setApprovalTable
+        })
+      }
+    })
+  }
+  setApprovalTable()
+}
+
+
 const table = useTable()
 const store = useStore()
 
@@ -557,6 +593,7 @@ const handleNavigateCalendar = (eventStartDate: string) => {
 }
 const viewCommuteProgress = useProgress(viewCommute)
 const viewAnnualLeaveProgress = useProgress(viewAnnualLeave)
+const viewAnnualLeaveApprovalProgress = useProgress(viewAnnualLeaveApproval)
 </script>
 
 <template>
@@ -607,7 +644,15 @@ const viewAnnualLeaveProgress = useProgress(viewAnnualLeave)
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z" />
               </svg>
-              <span class="flex-1 ms-3 whitespace-nowrap">연차 조회</span>
+              <span class="flex-1 ms-3 whitespace-nowrap">휴가 조회</span>
+            </div>
+          </li>
+          <li v-if="isAdmin()">
+            <div @click="viewAnnualLeaveApprovalProgress" class="cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M18 2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2h-5v8l-2.5-2.25L8 12V4H6v16h12z" />
+              </svg>
+              <span class="flex-1 ms-3 whitespace-nowrap">휴가 결재</span>
             </div>
           </li>
           <li class='sidebar-section'>

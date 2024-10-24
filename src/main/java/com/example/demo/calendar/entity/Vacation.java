@@ -52,4 +52,8 @@ public class Vacation extends CommonProperties {
     @Comment("승인자")
     private Employee approvedBy;
 
+    @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true, cascade = {CascadeType.REMOVE, CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinColumn(name = "calendar_event_id")
+    @Comment("이벤트 FK")
+    private CalendarEvent calendarEvent;
 }

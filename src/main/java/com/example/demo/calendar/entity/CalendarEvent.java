@@ -32,8 +32,6 @@ public class CalendarEvent extends CommonProperties {
     @Column(columnDefinition = "VARCHAR(30)")
     @Comment("캘린더 이벤트 색상")
     private String backgroundColor;
-    @JoinColumn(name = "vacation_id")
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    @Comment("연차 FK")
+    @OneToOne(mappedBy = "calendarEvent", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private Vacation vacation;
 }

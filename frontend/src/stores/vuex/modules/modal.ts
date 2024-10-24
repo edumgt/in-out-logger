@@ -25,7 +25,7 @@ export type SelectOption = ElementType<typeof selectOptions>
 export type InputValue = string
 export type OnConfirm = (() => void) | ((inputValue: InputValue) => void) | null
 export type OnClose = (() => void) | null
-export type InputHandler = ((input, prevInput) => string) | null
+export type InputHandler = ((input: string, prevInput: string) => string) | null
 
 export const modalTypes = ['alert', 'input'] as const
 
@@ -100,7 +100,7 @@ const modalModule: Module<ModalModuleState, VuexModules> = {
     },
     setDisableConfirm(state, payload){
       state.disableConfirm = payload
-    }
+    },
   },
   getters: {
     isAlertModalOpen(state) {
