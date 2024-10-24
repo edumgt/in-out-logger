@@ -90,28 +90,28 @@ const handleDateSelect = (selectInfo: DateSelectArg) => {
         return
       }
       try {
-        const response = await axios.post('/api/calendar/events', {
+        const data = await axios.post('/api/calendar/events', {
           title: inputValue,
           start: selectInfo.startStr,
           end: selectInfo.endStr,
           backgroundColor: selectBoxValue.value,
           isVacation: isVacation.value,
           vacationType: vacationType.value
-        })
+        }).then((res: AxiosResponse) => res.data)
         if (isVacation.value) {
           store.commit('setModal', {
             isOpen: true,
             content: h('p', '휴가 신청이 완료되었습니다.')
           })
         }
-        const { id, start, end, title } = response.data
+        const { id, start, end, title, backgroundColor } = data
         calendarApi.addEvent({
           id,
           title,
           start,
           end,
           allDay: true,
-          backgroundColor: selectBoxValue.value
+          backgroundColor
         })
       } catch (e) {
         if (isAxiosError(e)) {
@@ -347,7 +347,7 @@ const viewAnnualLeave = async () => {
       },
       onCellClick: {
         phoneNumber: handleCellClick('핸드폰 번호를 입력해주세요.', (input, prev) => {
-          input = input.replace(/[^0-9]/g, '').replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, "$1-$2-$3").replace(/(\-{1,2})$/g, "");
+          input = input.replace(/[^0-9]/g, '').replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, '$1-$2-$3').replace(/(\-{1,2})$/g, '')
           if (regex.phoneNumber.test(input)) {
             store.commit('setDisableConfirm', false)
             return input
@@ -481,7 +481,7 @@ const viewCommute = async () => {
       },
       onCellClick: {
         phoneNumber: handleCellClick('핸드폰 번호를 입력해주세요.', (input, prev) => {
-          input = input.replace(/[^0-9]/g, '').replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, "$1-$2-$3").replace(/(\-{1,2})$/g, "");
+          input = input.replace(/[^0-9]/g, '').replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, '$1-$2-$3').replace(/(\-{1,2})$/g, '')
           if (regex.phoneNumber.test(input)) {
             store.commit('setDisableConfirm', false)
             return input
@@ -560,10 +560,10 @@ const annualLeaveApprovalHeader = {
 const viewAnnualLeaveApproval = async () => {
   const data = await axios.get('/api/employees/vacations/pending').then((res: AxiosResponse) => res.data)
   const setApprovalTable = () => {
-    table(annualLeaveApprovalHeader,data, {
+    table(annualLeaveApprovalHeader, data, {
       onRowClick: (rowData) => {
         console.log(rowData)
-        const {employeeName, start, end ,vacationType, vacationId} = rowData
+        const { employeeName, start, end, vacationType, vacationId } = rowData
         store.commit('setModal', {
           isOpen: true,
           content: h('p', `${employeeName}님의 ${vacationType}(${start}~${end}) 승인할까요?`),
